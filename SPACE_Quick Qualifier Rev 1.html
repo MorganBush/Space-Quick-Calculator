@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPACE Quick Qualifier — Zentura</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --mint: #AED8C7; --mint-light: #D6EDE6; --mint-pale: #EFF8F4;
+  --dark: #232120; --mid: #5a5655; --soft: #f2f0ef;
+  --red: #e05252; --amber: #e09a2a; --green: #3aaa6e;
+  --radius: 10px; --shadow: 0 2px 12px rgba(35,33,32,.10);
+}
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); color: var(--dark); font-size: 14px; min-height: 100vh; }
+
+/* ── Header ── */
+.hdr { background: var(--dark); padding: 12px 24px; display: flex; align-items: center; gap: 14px; }
+.hdr-logo svg { width: 40px; height: auto; }
+.hdr-title { color: #fff; font-size: 17px; font-weight: 700; letter-spacing: -.3px; }
+.hdr-sub { color: var(--mint); font-size: 11px; margin-top: 1px; }
+.hdr-right { margin-left: auto; display: flex; gap: 8px; }
+.btn { border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity .15s; }
+.btn:hover { opacity: .85; }
+.btn-mint { background: var(--mint); color: var(--dark); }
+.btn-dark { background: #3d3a39; color: #fff; }
+.btn-outline { background: transparent; border: 1.5px solid #fff4; color: #fff; }
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn-red { background: var(--red); color: #fff; }
+
+/* ── Score Bar ── */
+.score-bar { background: var(--dark); border-top: 1px solid #fff1; padding: 10px 24px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.score-total { color: #fff; font-size: 26px; font-weight: 800; line-height: 1; white-space: nowrap; }
+.score-total span { font-size: 13px; font-weight: 400; color: #aaa; margin-left: 2px; }
+.score-badge { padding: 5px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; letter-spacing: .3px; white-space: nowrap; }
+.sb-none { background: #2a2727; color: #666; }
+.sb-pot  { background: #3d2e1a; color: var(--amber); }
+.sb-lead { background: #1a2e25; color: var(--mint); }
+.sb-hot  { background: #1a3d2a; color: #50e89a; }
+.score-dots { margin-left: auto; display: flex; gap: 12px; }
+.sdot-group { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.sdot-label { color: #888; font-size: 10px; font-weight: 700; letter-spacing: .5px; }
+.dots { display: flex; gap: 4px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: #3d3a39; transition: background .2s; }
+.dot.on { background: var(--mint); }
+.score-hint { color: #666; font-size: 11px; flex-basis: 100%; padding-top: 2px; }
+
+/* ── Main ── */
+.main { max-width: 880px; margin: 0 auto; padding: 16px 16px 40px; display: flex; flex-direction: column; gap: 12px; }
+
+/* ── Cards ── */
+.card { background: #fff; border-radius: var(--radius); box-shadow: var(--shadow); }
+.card-hdr { display: flex; align-items: center; gap: 10px; padding: 11px 16px; border-bottom: 1.5px solid var(--mint-light); }
+.section-letter { width: 28px; height: 28px; background: var(--mint); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: var(--dark); flex-shrink: 0; }
+.card-title { font-weight: 700; font-size: 14px; flex: 1; }
+.card-body { padding: 12px 16px 14px; }
+
+/* ── Grid ── */
+.r3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.r2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.r4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.mt8 { margin-top: 8px; }
+.mt10 { margin-top: 10px; }
+
+/* ── Fields ── */
+.fg { display: flex; flex-direction: column; gap: 4px; }
+.fg label { font-size: 10px; font-weight: 700; color: var(--mid); text-transform: uppercase; letter-spacing: .5px; }
+.fg input, .fg select, .fg textarea {
+  border: 1.5px solid #e0dedd; border-radius: 7px; padding: 7px 10px;
+  font-size: 13px; color: var(--dark); background: #fff; outline: none;
+  transition: border-color .15s; width: 100%;
+}
+.fg input:focus, .fg select:focus, .fg textarea:focus { border-color: var(--mint); }
+.fg select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a5655' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
+.fg textarea { resize: none; font-family: inherit; min-height: 56px; }
+
+/* ── Radio pills ── */
+.pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.pill input[type=radio] { display: none; }
+.pill span {
+  display: block; padding: 5px 11px; border-radius: 20px; font-size: 12px; font-weight: 600;
+  border: 1.5px solid #e0dedd; cursor: pointer; transition: all .15s; color: var(--mid);
+  white-space: nowrap;
+}
+.pill input:checked + span { border-color: var(--mint); background: var(--mint-pale); color: var(--dark); }
+.pill:hover span { border-color: var(--mint); }
+
+/* ── Section divider ── */
+.divider { height: 1px; background: var(--mint-light); margin: 10px 0; }
+
+/* ── Actions ── */
+.actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.mode-status { font-size: 12px; color: var(--mid); padding: 6px 10px; background: var(--mint-pale); border-radius: 8px; border: 1px solid var(--mint-light); }
+.actions-sep { flex: 1; }
+
+/* ── Modals ── */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 100; display: none; align-items: center; justify-content: center; }
+.overlay.show { display: flex; }
+.modal { background: #fff; border-radius: 14px; padding: 24px 28px; width: min(480px, 94vw); box-shadow: 0 8px 40px rgba(0,0,0,.25); max-height: 88vh; overflow-y: auto; }
+.modal h2 { font-size: 17px; font-weight: 700; margin-bottom: 16px; }
+.modal-row { margin-bottom: 12px; }
+.modal-row label { display: block; font-size: 11px; font-weight: 700; color: var(--mid); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .4px; }
+.modal-row input { width: 100%; border: 1.5px solid #e0dedd; border-radius: 7px; padding: 8px 12px; font-size: 13px; outline: none; }
+.modal-row input:focus { border-color: var(--mint); }
+.modal-hint { font-size: 11px; color: var(--mid); margin-top: 5px; line-height: 1.5; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+.progress-modal { text-align: center; }
+.spinner { width: 36px; height: 36px; border: 4px solid var(--mint-light); border-top-color: var(--mint); border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.success-modal .si { font-size: 36px; margin-bottom: 10px; }
+.success-modal ul { text-align: left; font-size: 13px; margin: 10px 0; padding-left: 18px; line-height: 2; }
+.owner-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; margin-bottom: 6px; align-items: center; }
+.owner-row input { border: 1.5px solid #e0dedd; border-radius: 7px; padding: 7px 10px; font-size: 12px; outline: none; width: 100%; }
+.owner-row .del-btn { background: #fee; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; color: var(--red); font-size: 15px; }
+.stage-map { width: 100%; border-collapse: collapse; font-size: 12px; }
+.stage-map td { padding: 4px 0; vertical-align: middle; }
+.stage-map td:first-child { color: var(--mid); width: 52%; font-weight: 600; }
+.stage-map input { border: 1.5px solid #e0dedd; border-radius: 7px; padding: 6px 10px; font-size: 12px; outline: none; width: 100%; }
+.stage-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+.reset-modal p { font-size: 14px; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="hdr">
+  <div class="hdr-logo">
+    <svg viewBox="0 0 72 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <text x="2" y="34" font-family="'Segoe UI',sans-serif" font-weight="900" font-size="32" fill="#AED8C7">Z</text>
+      <path fill-rule="evenodd" clip-rule="evenodd"
+        d="M36 56C16.118 56 0 38.091 0 16H14.4C14.4 30.359 24.03 42 36 42C47.97 42 57.6 30.359 57.6 16H72C72 38.091 55.882 56 36 56Z"
+        fill="#AED8C7"/>
+    </svg>
+  </div>
+  <div>
+    <div class="hdr-title">SPACE Quick Qualifier</div>
+    <div class="hdr-sub">Zentura Workspace · Cold Call &amp; BD Capture</div>
+  </div>
+  <div class="hdr-right">
+    <button class="btn btn-outline btn-sm" onclick="openReset()">↺ Reset</button>
+  </div>
+</header>
+
+<!-- Score Bar -->
+<div class="score-bar">
+  <div class="score-total" id="score-total">0<span>/20</span></div>
+  <div class="score-badge sb-none" id="score-badge">—</div>
+  <div class="score-dots">
+    <div class="sdot-group">
+      <div class="dots" id="dots-S"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+      <div class="sdot-label">S</div>
+    </div>
+    <div class="sdot-group">
+      <div class="dots" id="dots-P"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+      <div class="sdot-label">P</div>
+    </div>
+    <div class="sdot-group">
+      <div class="dots" id="dots-A"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+      <div class="sdot-label">A</div>
+    </div>
+    <div class="sdot-group">
+      <div class="dots" id="dots-C"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+      <div class="sdot-label">C</div>
+    </div>
+    <div class="sdot-group">
+      <div class="dots" id="dots-E"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+      <div class="sdot-label">E</div>
+    </div>
+  </div>
+  <div class="score-hint">Fill in what you know — score updates live. Aim for as many fields as you can capture on the call.</div>
+</div>
+
+<!-- Main -->
+<div class="main">
+
+  <!-- Prospect -->
+  <div class="card">
+    <div class="card-hdr">
+      <div class="section-letter" style="background:var(--dark);color:var(--mint);">✦</div>
+      <div class="card-title">Who did you speak to?</div>
+    </div>
+    <div class="card-body">
+      <div class="r3">
+        <div class="fg"><label>First Name</label><input id="fn" placeholder="First name" oninput="autoDeal()"></div>
+        <div class="fg"><label>Last Name</label><input id="ln" placeholder="Last name" oninput="autoDeal()"></div>
+        <div class="fg"><label>Company</label><input id="co" placeholder="Company name" oninput="autoDeal()"></div>
+      </div>
+      <div class="r3 mt8">
+        <div class="fg"><label>Their Role</label><input id="jt" placeholder="e.g. Office Manager"></div>
+        <div class="fg"><label>Phone</label><input id="ph" type="tel" placeholder="+44…"></div>
+        <div class="fg"><label>Email</label><input id="em" type="email" placeholder="Optional"></div>
+      </div>
+      <div class="r2 mt8">
+        <div class="fg"><label>Deal Name <span style="font-weight:400;font-size:10px;text-transform:none;">(auto)</span></label><input id="dn" placeholder="Company — Office Fit-Out"></div>
+        <div class="fg"><label>Call Date</label><input id="cd" type="date"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Deal Details -->
+  <div class="card" id="deal-card">
+    <div class="card-hdr">
+      <div class="section-letter" style="background:var(--mint-light);color:var(--dark);">D</div>
+      <div class="card-title">Deal Details</div>
+    </div>
+    <div class="card-body">
+      <div class="r2">
+        <div class="fg">
+          <label>Create New Deal?</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--dark);text-transform:none;letter-spacing:0;">
+            <input id="create-new-deal" type="checkbox" style="width:auto;" onchange="handleDealModeChange()">
+            Yes, create a new deal
+          </label>
+        </div>
+        <div class="fg"><label>Deal Record ID</label><input id="deal-record-id" placeholder="HubSpot deal record ID" oninput="handleDealModeChange()"></div>
+      </div>
+      <div class="mode-status mt8" id="deal-mode-status">Choose create new deal or enter a deal record ID.</div>
+    </div>
+  </div>
+
+  <!-- SPACE Quick Grid -->
+  <div class="card">
+    <div class="card-hdr">
+      <div class="section-letter">S</div>
+      <div class="card-title">Scope <span style="font-size:11px;font-weight:400;color:var(--mid);">— How big is the opportunity?</span></div>
+      <div class="dots" id="dots-S-hdr"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+    </div>
+    <div class="card-body">
+      <div class="fg"><label>Headcount / Office Size</label>
+        <div class="pills" id="s-hc-pills">
+          <label class="pill"><input type="radio" name="s-hc" value="under20" onchange="score()"><span>Under 20</span></label>
+          <label class="pill"><input type="radio" name="s-hc" value="20-50" onchange="score()"><span>20–50</span></label>
+          <label class="pill"><input type="radio" name="s-hc" value="50-100" onchange="score()"><span>50–100</span></label>
+          <label class="pill"><input type="radio" name="s-hc" value="100-250" onchange="score()"><span>100–250</span></label>
+          <label class="pill"><input type="radio" name="s-hc" value="250plus" onchange="score()"><span>250+</span></label>
+          <label class="pill"><input type="radio" name="s-hc" value="unknown" onchange="score()"><span>Unknown</span></label>
+        </div>
+      </div>
+      <div class="fg mt8"><label>What are they looking for? <span style="font-weight:400;font-size:10px;text-transform:none;">(optional)</span></label>
+        <div class="pills">
+          <label class="pill"><input type="radio" name="s-type" value="New office" onchange="score()"><span>New office</span></label>
+          <label class="pill"><input type="radio" name="s-type" value="Refurbishment" onchange="score()"><span>Refurbishment</span></label>
+          <label class="pill"><input type="radio" name="s-type" value="Office move" onchange="score()"><span>Office move</span></label>
+          <label class="pill"><input type="radio" name="s-type" value="Expansion" onchange="score()"><span>Expansion</span></label>
+          <label class="pill"><input type="radio" name="s-type" value="Not clear" onchange="score()"><span>Not clear yet</span></label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">
+      <div class="section-letter">P</div>
+      <div class="card-title">Purpose <span style="font-size:11px;font-weight:400;color:var(--mid);">— Why are they looking?</span></div>
+      <div class="dots" id="dots-P-hdr"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+    </div>
+    <div class="card-body">
+      <div class="fg"><label>Trigger / Driver</label>
+        <div class="pills">
+          <label class="pill"><input type="radio" name="p-trigger" value="Lease expiry" onchange="score()"><span>Lease expiry</span></label>
+          <label class="pill"><input type="radio" name="p-trigger" value="Growing headcount" onchange="score()"><span>Growing headcount</span></label>
+          <label class="pill"><input type="radio" name="p-trigger" value="Consolidating" onchange="score()"><span>Consolidating</span></label>
+          <label class="pill"><input type="radio" name="p-trigger" value="Refreshing / rebrand" onchange="score()"><span>Refreshing / rebrand</span></label>
+          <label class="pill"><input type="radio" name="p-trigger" value="Exploring options" onchange="score()"><span>Just exploring</span></label>
+          <label class="pill"><input type="radio" name="p-trigger" value="None mentioned" onchange="score()"><span>None mentioned</span></label>
+        </div>
+      </div>
+      <div class="fg mt8"><label>Timeline Feel</label>
+        <div class="pills">
+          <label class="pill"><input type="radio" name="p-timeline" value="urgent" onchange="score()"><span>🔴 Urgent — under 6 months</span></label>
+          <label class="pill"><input type="radio" name="p-timeline" value="near" onchange="score()"><span>🟡 Near-term — 6–12 months</span></label>
+          <label class="pill"><input type="radio" name="p-timeline" value="long" onchange="score()"><span>🟢 Long-term — 12 months+</span></label>
+          <label class="pill"><input type="radio" name="p-timeline" value="unknown" onchange="score()"><span>Unknown</span></label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">
+      <div class="section-letter">A</div>
+      <div class="card-title">Authority <span style="font-size:11px;font-weight:400;color:var(--mid);">— Who are you talking to?</span></div>
+      <div class="dots" id="dots-A-hdr"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+    </div>
+    <div class="card-body">
+      <div class="fg"><label>Their Level</label>
+        <div class="pills">
+          <label class="pill"><input type="radio" name="a-level" value="dm" onchange="score()"><span>Decision maker (CEO/MD/Director)</span></label>
+          <label class="pill"><input type="radio" name="a-level" value="budget" onchange="score()"><span>Budget holder (CFO/FD)</span></label>
+          <label class="pill"><input type="radio" name="a-level" value="influencer" onchange="score()"><span>Influencer (Office / Facilities)</span></label>
+          <label class="pill"><input type="radio" name="a-level" value="gatekeeper" onchange="score()"><span>Gatekeeper / PA</span></label>
+          <label class="pill"><input type="radio" name="a-level" value="unknown" onchange="score()"><span>Unknown</span></label>
+        </div>
+      </div>
+      <div class="fg mt8"><label>Their Openness</label>
+        <div class="pills">
+          <label class="pill"><input type="radio" name="a-open" value="hot" onchange="score()"><span>Very receptive</span></label>
+          <label class="pill"><input type="radio" name="a-open" value="warm" onchange="score()"><span>Somewhat interested</span></label>
+          <label class="pill"><input type="radio" name="a-open" value="cold" onchange="score()"><span>Polite but cold</span></label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">
+      <div class="section-letter">C</div>
+      <div class="card-title">Cost <span style="font-size:11px;font-weight:400;color:var(--mid);">— Any budget signals?</span></div>
+      <div class="dots" id="dots-C-hdr"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+    </div>
+    <div class="card-body">
+      <div class="fg"><label>Budget Sense</label>
+        <div class="pills">
+          <label class="pill"><input type="radio" name="c-budget" value="specific" onchange="score()"><span>Mentioned a specific figure</span></label>
+          <label class="pill"><input type="radio" name="c-budget" value="confirmed" onchange="score()"><span>Budget exists — no detail</span></label>
+          <label class="pill"><input type="radio" name="c-budget" value="vague" onchange="score()"><span>Vague — possibly</span></label>
+          <label class="pill"><input type="radio" name="c-budget" value="none" onchange="score()"><span>Not discussed</span></label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">
+      <div class="section-letter">E</div>
+      <div class="card-title">Execution <span style="font-size:11px;font-weight:400;color:var(--mid);">— How do they work?</span></div>
+      <div class="dots" id="dots-E-hdr"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+    </div>
+    <div class="card-body">
+      <div class="fg"><label>Done a fit-out before?</label>
+        <div class="pills">
+          <label class="pill"><input type="radio" name="e-done" value="recent" onchange="score()"><span>Yes — recently</span></label>
+          <label class="pill"><input type="radio" name="e-done" value="prev" onchange="score()"><span>Yes — a few years ago</span></label>
+          <label class="pill"><input type="radio" name="e-done" value="first" onchange="score()"><span>No — first time</span></label>
+          <label class="pill"><input type="radio" name="e-done" value="unknown" onchange="score()"><span>Unknown</span></label>
+        </div>
+      </div>
+      <div class="fg mt8"><label>How do they usually appoint?</label>
+        <div class="pills">
+          <label class="pill"><input type="radio" name="e-appoint" value="negotiated" onchange="score()"><span>Negotiated / direct</span></label>
+          <label class="pill"><input type="radio" name="e-appoint" value="referral" onchange="score()"><span>Referral / recommendation</span></label>
+          <label class="pill"><input type="radio" name="e-appoint" value="quotes" onchange="score()"><span>2–3 quotes</span></label>
+          <label class="pill"><input type="radio" name="e-appoint" value="tender" onchange="score()"><span>Full tender (4+)</span></label>
+          <label class="pill"><input type="radio" name="e-appoint" value="unknown" onchange="score()"><span>Don't know yet</span></label>
+        </div>
+      </div>
+      <div class="fg mt8"><label>Anyone else involved?</label>
+        <div class="pills">
+          <label class="pill"><input type="radio" name="e-others" value="none" onchange="score()"><span>No — speaking to us directly</span></label>
+          <label class="pill"><input type="radio" name="e-others" value="agent" onchange="score()"><span>Agent / property consultant</span></label>
+          <label class="pill"><input type="radio" name="e-others" value="pm" onchange="score()"><span>Project manager / consultant</span></label>
+          <label class="pill"><input type="radio" name="e-others" value="inhouse" onchange="score()"><span>In-house team managing it</span></label>
+          <label class="pill"><input type="radio" name="e-others" value="unknown" onchange="score()"><span>Unknown</span></label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Next Step -->
+  <div class="card">
+    <div class="card-hdr">
+      <div class="section-letter" style="background:var(--mint-light);color:var(--dark);">→</div>
+      <div class="card-title">Next Step</div>
+    </div>
+    <div class="card-body">
+      <div class="fg"><label>Agreed action</label>
+        <div class="pills">
+          <label class="pill"><input type="radio" name="e-next" value="meeting" onchange="score()"><span>Meeting booked</span></label>
+          <label class="pill"><input type="radio" name="e-next" value="callback" onchange="score()"><span>Call back agreed</span></label>
+          <label class="pill"><input type="radio" name="e-next" value="info" onchange="score()"><span>Sending credentials / info</span></label>
+          <label class="pill"><input type="radio" name="e-next" value="nothing" onchange="score()"><span>No next step</span></label>
+        </div>
+      </div>
+      <div class="r2 mt8">
+        <div class="fg"><label>Follow-up Date</label><input id="ns-date" type="date"></div>
+        <div class="fg"><label>Owner</label>
+          <select id="ns-owner"><option value="">— Select —</option></select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notes -->
+  <div class="card">
+    <div class="card-hdr">
+      <div class="section-letter" style="background:var(--mint-light);color:var(--dark);">✎</div>
+      <div class="card-title">Call Notes <span style="font-size:11px;font-weight:400;color:var(--mid);">— anything else worth capturing</span></div>
+    </div>
+    <div class="card-body">
+      <div class="fg">
+        <textarea id="notes" placeholder="Key quotes, objections, context, who referred them…" style="min-height:64px;"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="card">
+    <div class="card-body">
+      <div class="actions">
+        <button class="btn btn-mint" onclick="pushToMake()">Save SPACE Quick Qualification</button>
+        <div class="actions-sep"></div>
+        <div id="push-status" style="font-size:12px;color:var(--mid);"></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<!-- Settings Modal -->
+<div class="overlay" id="ov-settings">
+  <div class="modal">
+    <h2>⚙ HubSpot Settings</h2>
+    <div class="modal-row">
+      <label>Private App Token</label>
+      <input id="cfg-token" type="password" placeholder="pat-na1-…">
+      <div class="modal-hint">Settings → Integrations → Private Apps. Needs CRM read/write scopes.</div>
+    </div>
+    <div class="modal-row">
+      <label>Pipeline ID</label>
+      <input id="cfg-pipe" placeholder="e.g. default">
+    </div>
+    <div class="modal-row">
+      <label>Deal Stages — mapped to lead status</label>
+      <div class="modal-hint" style="margin-bottom:8px;">Enter the HubSpot stage ID for each outcome.</div>
+      <table class="stage-map">
+        <tr><td><span class="stage-dot" style="background:var(--amber);"></span>Potential Lead</td><td><input id="stg-pot" placeholder="stage ID"></td></tr>
+        <tr><td><span class="stage-dot" style="background:var(--mint);"></span>Lead</td><td><input id="stg-lead" placeholder="stage ID"></td></tr>
+        <tr><td><span class="stage-dot" style="background:#50e89a;"></span>Hot Lead</td><td><input id="stg-hot" placeholder="stage ID"></td></tr>
+      </table>
+    </div>
+    <div class="modal-row">
+      <label>Team Members</label>
+      <button class="btn btn-mint btn-sm" style="margin-bottom:8px;" onclick="loadOwnersFromHubSpot()">⬇ Load from HubSpot</button>
+      <div id="owners-fetch-status" style="font-size:11px;color:var(--mid);margin-bottom:6px;"></div>
+      <div id="owners-list"></div>
+      <button class="btn btn-dark btn-sm" style="margin-top:6px;" onclick="addOwnerRow('','')">+ Add manually</button>
+    </div>
+    <div class="modal-row">
+      <label>Notification Email</label>
+      <input id="cfg-notify" type="email" placeholder="gerry@zenturaworkspace.co.uk">
+    </div>
+    <div class="modal-row">
+      <label>CORS Proxy URL <span style="font-weight:400;color:#aaa;">(optional)</span></label>
+      <input id="cfg-proxy" placeholder="https://your-worker.workers.dev">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-dark" onclick="saveSettings()">Save</button>
+      <button class="btn btn-outline" style="color:var(--dark);border-color:#ccc;" onclick="closeModal('ov-settings')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Progress Modal -->
+<div class="overlay" id="ov-progress">
+  <div class="modal progress-modal">
+    <div class="spinner"></div>
+    <div style="font-weight:700;font-size:15px;">Pushing to HubSpot…</div>
+    <div id="progress-msg" style="font-size:13px;color:var(--mid);margin-top:6px;"></div>
+  </div>
+</div>
+
+<!-- Success Modal -->
+<div class="overlay" id="ov-success">
+  <div class="modal success-modal" style="text-align:center;">
+    <div class="si">🎉</div>
+    <div style="font-weight:700;font-size:17px;">Pushed to HubSpot!</div>
+    <ul id="success-list" style="text-align:left;"></ul>
+    <div class="modal-actions" style="justify-content:center;">
+      <button class="btn btn-mint" onclick="closeModal('ov-success')">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reset Modal -->
+<div class="overlay" id="ov-reset">
+  <div class="modal">
+    <h2>↺ Reset</h2>
+    <p class="reset-modal">Clear all fields and start fresh?</p>
+    <div class="modal-actions">
+      <button class="btn btn-red" onclick="doReset()">Reset</button>
+      <button class="btn btn-outline" style="color:var(--dark);border-color:#ccc;" onclick="closeModal('ov-reset')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Settings ──
+const CFG_KEY = 'zt_quick_cfg';
+function getCfgRaw(){ try { return JSON.parse(localStorage.getItem(CFG_KEY)||'{}'); } catch(e){ return {}; } }
+function getCfg(k){ return getCfgRaw()[k]||''; }
+
+function addOwnerRow(name, id){
+  const list = document.getElementById('owners-list');
+  const row = document.createElement('div');
+  row.className = 'owner-row';
+  row.innerHTML = `<input class="owner-name" placeholder="Name" value="${name||''}"><input class="owner-id" placeholder="HubSpot User ID" value="${id||''}"><button class="del-btn" onclick="this.closest('.owner-row').remove()">×</button>`;
+  list.appendChild(row);
+}
+
+function populateOwnerDropdown(owners){
+  const sel = document.getElementById('ns-owner');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— Select —</option>';
+  (owners||[]).forEach(o=>{
+    if(!o.name) return;
+    const opt = document.createElement('option');
+    opt.value = o.id||'';
+    opt.textContent = o.name;
+    sel.appendChild(opt);
+  });
+  if(cur) sel.value = cur;
+}
+
+async function loadOwnersFromHubSpot(){
+  const token = getCfg('token');
+  const proxy = getCfg('proxy');
+  const status = document.getElementById('owners-fetch-status');
+  if(!token){ status.textContent='⚠ Save your token first.'; return; }
+  status.textContent='Loading…'; status.style.color='var(--mid)';
+  try {
+    const base = proxy ? proxy.replace(/\/$/,'') : 'https://api.hubapi.com';
+    const r = await fetch(`${base}/crm/v3/owners?limit=100`,{ headers:{'Authorization':'Bearer '+token} });
+    if(!r.ok) throw new Error(r.status);
+    const data = await r.json();
+    document.getElementById('owners-list').innerHTML='';
+    (data.results||[]).forEach(o=>{
+      addOwnerRow([o.firstName,o.lastName].filter(Boolean).join(' ')||o.email, String(o.id));
+    });
+    status.textContent=`✓ Loaded ${(data.results||[]).length} members — remove anyone not needed, then Save.`;
+    status.style.color='var(--green)';
+  } catch(e){ status.textContent='⚠ '+e.message; status.style.color='var(--red)'; }
+}
+
+function loadSettings(){
+  try {
+    const c = getCfgRaw();
+    ['token','pipe','notify','proxy'].forEach(k=>{ const el=document.getElementById('cfg-'+k); if(el&&c[k]) el.value=c[k]; });
+    const stages = c.stages||{};
+    ['pot','lead','hot'].forEach(k=>{ const el=document.getElementById('stg-'+k); if(el) el.value=stages[k]||''; });
+    const owners = c.owners||[];
+    owners.forEach(o=>addOwnerRow(o.name,o.id));
+    if(owners.length===0) addOwnerRow('','');
+    populateOwnerDropdown(owners);
+  } catch(e){ addOwnerRow('',''); }
+}
+
+function saveSettings(){
+  const c = getCfgRaw();
+  ['token','pipe','notify','proxy'].forEach(k=>{ const el=document.getElementById('cfg-'+k); if(el) c[k]=el.value.trim(); });
+  c.stages={};
+  ['pot','lead','hot'].forEach(k=>{ const el=document.getElementById('stg-'+k); if(el) c.stages[k]=el.value.trim(); });
+  c.owners=[];
+  document.querySelectorAll('.owner-row').forEach(row=>{
+    const name=row.querySelector('.owner-name').value.trim();
+    const id=row.querySelector('.owner-id').value.trim();
+    if(name) c.owners.push({name,id});
+  });
+  localStorage.setItem(CFG_KEY,JSON.stringify(c));
+  populateOwnerDropdown(c.owners);
+  closeModal('ov-settings');
+  document.getElementById('push-status').textContent='✓ Settings saved';
+  setTimeout(()=>{ document.getElementById('push-status').textContent=''; },3000);
+}
+
+function getStageForLabel(label){
+  const keyMap={'Potential Lead':'pot','Lead':'lead','Hot Lead':'hot'};
+  const key=keyMap[label]||'pot';
+  const stages=getCfgRaw().stages||{};
+  return stages[key]||stages['pot']||'appointmentscheduled';
+}
+
+// ── Modals ──
+function openSettings(){ document.getElementById('ov-settings').classList.add('show'); }
+function openReset(){ document.getElementById('ov-reset').classList.add('show'); }
+function closeModal(id){ document.getElementById(id).classList.remove('show'); }
+document.querySelectorAll('.overlay').forEach(ov=>{ ov.addEventListener('click',e=>{ if(e.target===ov) closeModal(ov.id); }); });
+
+// ── Reset ──
+function doReset(){
+  document.querySelectorAll('input[type=radio]').forEach(r=>r.checked=false);
+  document.querySelectorAll('input[type=text],input[type=email],input[type=tel],input[type=date],textarea,select').forEach(el=>{
+    if(!el.id.startsWith('cfg-')&&!el.id.startsWith('stg-')&&!el.classList.contains('owner-name')&&!el.classList.contains('owner-id')) el.value='';
+  });
+  delete document.getElementById('dn').dataset.manual;
+  score();
+  closeModal('ov-reset');
+}
+
+// ── Auto deal name ──
+function autoDeal(){
+  const dn=document.getElementById('dn');
+  if(!dn.dataset.manual){ const co=document.getElementById('co').value.trim(); dn.value=co?co+' — Office Fit-Out':''; }
+}
+document.getElementById('dn').addEventListener('input',()=>{ document.getElementById('dn').dataset.manual='1'; });
+
+// ── Helpers ──
+function v(id){ const el=document.getElementById(id); return el?el.value.trim():''; }
+function rv(name){ const el=document.querySelector(`input[name="${name}"]:checked`); return el?el.value:''; }
+
+// ── Scoring ──
+function calcS(){
+  let s=0;
+  const hc=rv('s-hc');
+  if(hc==='250plus') s=4;
+  else if(hc==='100-250') s=3;
+  else if(hc==='50-100') s=2.5;
+  else if(hc==='20-50') s=1.5;
+  else if(hc==='under20') s=0.5;
+  const type=rv('s-type');
+  if(type && type!=='Not clear') s=Math.min(4,s+0.5);
+  return Math.min(4,Math.round(s*10)/10);
+}
+function calcP(){
+  let s=0;
+  const tr=rv('p-trigger');
+  if(tr==='Lease expiry') s+=2;
+  else if(tr==='Growing headcount'||tr==='Consolidating'||tr==='Refreshing / rebrand') s+=1.5;
+  else if(tr==='Exploring options') s+=0.5;
+  const tl=rv('p-timeline');
+  if(tl==='urgent') s+=2;
+  else if(tl==='near') s+=1.2;
+  else if(tl==='long') s+=0.4;
+  return Math.min(4,Math.round(s*10)/10);
+}
+function calcA(){
+  let s=0;
+  const lv=rv('a-level');
+  if(lv==='dm') s+=2.5;
+  else if(lv==='budget') s+=2;
+  else if(lv==='influencer') s+=1;
+  else if(lv==='gatekeeper') s+=0.25;
+  const op=rv('a-open');
+  if(op==='hot') s+=1.5;
+  else if(op==='warm') s+=0.75;
+  return Math.min(4,Math.round(s*10)/10);
+}
+function calcC(){
+  const b=rv('c-budget');
+  if(b==='specific') return 4;
+  if(b==='confirmed') return 3;
+  if(b==='vague') return 1.5;
+  return 0;
+}
+function calcE(){
+  let s=0;
+  // Have they done this before?
+  const done=rv('e-done');
+  if(done==='recent') s+=1.5;
+  else if(done==='prev') s+=1;
+  else if(done==='first') s+=0.5;
+  // How they appoint
+  const ap=rv('e-appoint');
+  if(ap==='negotiated') s+=2;
+  else if(ap==='referral') s+=1.5;
+  else if(ap==='quotes') s+=1;
+  else if(ap==='tender') s+=0.4;
+  // Others involved (direct = better for us)
+  const ot=rv('e-others');
+  if(ot==='none') s+=0.5;
+  else if(ot==='inhouse') s+=0.3;
+  return Math.min(4,Math.round(s*10)/10);
+}
+
+function badge(total){
+  if(total>=14) return ['Hot Lead','sb-hot'];
+  if(total>=8)  return ['Lead','sb-lead'];
+  if(total>=1)  return ['Potential Lead','sb-pot'];
+  return ['—','sb-none'];
+}
+
+function renderDots(key,val){
+  const disp=Math.round(val);
+  ['','- hdr'].forEach(suffix=>{
+    const id='dots-'+key+(suffix===''?'':suffix.trim().replace(' ','-'));
+    // handle both dot group IDs
+    const actualId = suffix==='' ? 'dots-'+key : 'dots-'+key+'-hdr';
+    document.querySelectorAll(`#${actualId} .dot`).forEach((d,i)=>{ d.className='dot'+(i<disp?' on':''); });
+  });
+}
+
+function score(){
+  const sc={S:calcS(),P:calcP(),A:calcA(),C:calcC(),E:calcE()};
+  const total=Math.round((sc.S+sc.P+sc.A+sc.C+sc.E)*10)/10;
+  document.getElementById('score-total').innerHTML=Math.round(total)+'<span>/20</span>';
+  const [label,cls]=badge(total);
+  const b=document.getElementById('score-badge');
+  b.textContent=label; b.className='score-badge '+cls;
+  Object.entries(sc).forEach(([k,val])=>{
+    const disp=Math.round(val);
+    ['dots-'+k,'dots-'+k+'-hdr'].forEach(id=>{
+      document.querySelectorAll(`#${id} .dot`).forEach((d,i)=>{ d.className='dot'+(i<disp?' on':''); });
+    });
+  });
+}
+score();
+
+// ── Copy Summary ──
+function copySummary(){
+  const sc={S:calcS(),P:calcP(),A:calcA(),C:calcC(),E:calcE()};
+  const total=Math.round((sc.S+sc.P+sc.A+sc.C+sc.E)*10)/10;
+  const [label]=badge(total);
+  const lines=[
+    'SPACE QUICK QUALIFICATION',
+    `Date: ${v('cd')||new Date().toLocaleDateString('en-GB')}`,
+    '',
+    `Contact: ${v('fn')} ${v('ln')} | ${v('jt')} @ ${v('co')}`,
+    `Phone: ${v('ph')} | Email: ${v('em')}`,
+    '',
+    `SCORE: ${total}/20 — ${label}`,
+    `S:${sc.S}  P:${sc.P}  A:${sc.A}  C:${sc.C}  E:${sc.E}`,
+    '',
+    `[Scope]    Size: ${rv('s-hc')||'Unknown'} | Type: ${rv('s-type')||'Unknown'}`,
+    `[Purpose]  Trigger: ${rv('p-trigger')||'Unknown'} | Timeline: ${rv('p-timeline')||'Unknown'}`,
+    `[Authority] Level: ${rv('a-level')||'Unknown'} | Openness: ${rv('a-open')||'Unknown'}`,
+    `[Cost]     Budget: ${rv('c-budget')||'Unknown'}`,
+    `[Execution] Done before: ${rv('e-done')||'Unknown'} | Appoints via: ${rv('e-appoint')||'Unknown'} | Others: ${rv('e-others')||'Unknown'}`,
+    '',
+    v('notes')?`Notes: ${v('notes')}`:'',
+  ].filter(l=>l!==undefined).join('\n');
+  navigator.clipboard.writeText(lines).then(()=>{
+    document.getElementById('push-status').textContent='✓ Copied';
+    setTimeout(()=>{ document.getElementById('push-status').textContent=''; },2500);
+  });
+}
+
+// ── Make / HubSpot integration ──
+const MAKE_SAVE_WEBHOOK_URL = 'https://hook.eu1.make.com/mde9yampvy3tc3z2s4pbb2yi1l66qpe5';
+const MAKE_LOAD_WEBHOOK_URL = 'https://hook.eu1.make.com/wo2eqpy56cz1pox9xkd7aw4oscdv6cfo';
+
+function setStatus(msg, isError=false){
+  const el = document.getElementById('push-status');
+  if(!el) return;
+  el.textContent = msg;
+  el.style.color = isError ? 'var(--red)' : 'var(--mid)';
+}
+
+function handleDealModeChange(){
+  const createEl = document.getElementById('create-new-deal');
+  const dealEl = document.getElementById('deal-record-id');
+  const status = document.getElementById('deal-mode-status');
+  if(!createEl || !dealEl) return;
+
+  if(createEl.checked){
+    dealEl.value = '';
+    dealEl.disabled = true;
+    if(status) status.textContent = 'Mode: Creating a new HubSpot deal';
+    return;
+  }
+
+  dealEl.disabled = false;
+  if(dealEl.value.trim()){
+    if(status) status.textContent = 'Mode: Updating existing HubSpot deal';
+  } else {
+    if(status) status.textContent = 'Choose create new deal or enter a deal record ID.';
+  }
+}
+
+function validateDealMode(){
+  const createNew = document.getElementById('create-new-deal').checked;
+  const dealId = v('deal-record-id');
+  if(createNew && dealId){
+    return 'Choose either Create New Deal or Deal Record ID, not both.';
+  }
+  if(!createNew && !dealId){
+    return 'Tick Create New Deal or enter a Deal Record ID.';
+  }
+  return '';
+}
+
+function quickDataPayload(){
+  const sc={S:calcS(),P:calcP(),A:calcA(),C:calcC(),E:calcE()};
+  const total=Math.round((sc.S+sc.P+sc.A+sc.C+sc.E)*10)/10;
+  const [label]=badge(total);
+  const data = {
+    source_tool: 'SPACE Quick Qualifier',
+    space_version: 'quick-1.0',
+    dealname: v('dn') || (v('co') ? v('co') + ' — Office Fit-Out' : ''),
+    create_new_deal: document.getElementById('create-new-deal').checked,
+    deal_record_id: v('deal-record-id'),
+    call_date: v('cd'),
+
+    firstname: v('fn'),
+    lastname: v('ln'),
+    job_title: v('jt'),
+    email: v('em'),
+    phone: v('ph'),
+    company: v('co'),
+
+    quick_headcount_band: rv('s-hc'),
+    quick_space_type: rv('s-type'),
+    quick_trigger: rv('p-trigger'),
+    quick_timeline: rv('p-timeline'),
+    quick_authority_level: rv('a-level'),
+    quick_openness: rv('a-open'),
+    quick_budget_sense: rv('c-budget'),
+    quick_fitout_experience: rv('e-done'),
+    quick_appointment_route: rv('e-appoint'),
+    quick_others_involved: rv('e-others'),
+    quick_next_step: rv('e-next'),
+
+    next_step: rv('e-next'),
+    next_step_date: v('ns-date'),
+    owner: v('ns-owner'),
+    notes: v('notes'),
+
+    space_score: total,
+    space_score_label: label,
+    space_score_scope: sc.S,
+    space_score_purpose: sc.P,
+    space_score_authority: sc.A,
+    space_score_cost: sc.C,
+    space_score_execution: sc.E,
+
+    submitted_at: new Date().toISOString()
+  };
+  data.space_data_json = JSON.stringify(data);
+  return data;
+}
+
+async function pushToMake(){
+  const modeError = validateDealMode();
+  if(modeError){ setStatus('✗ ' + modeError, true); return; }
+
+  const data = quickDataPayload();
+  if(!data.company && data.create_new_deal){ setStatus('✗ Company is required to create a new deal.', true); return; }
+  setStatus('Saving...');
+
+  try {
+    const r = await fetch(MAKE_SAVE_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if(!r.ok) throw new Error('Make webhook returned ' + r.status);
+    const t = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+    setStatus('✓ Saved to HubSpot at ' + t);
+  } catch(e){
+    setStatus('✗ Save failed: ' + (e.message||'Unknown error'), true);
+  }
+}
+
+function setVal(id,value){
+  const el=document.getElementById(id);
+  if(el && value!==undefined && value!==null) el.value=value;
+}
+
+function setRadio(name,value){
+  if(!value) return;
+  const el=document.querySelector(`input[name="${name}"][value="${CSS.escape(value)}"]`);
+  if(el) el.checked=true;
+}
+
+function populateForm(d){
+  setVal('dn', d.dealname);
+  setVal('fn', d.firstname);
+  setVal('ln', d.lastname);
+  setVal('jt', d.job_title);
+  setVal('em', d.email);
+  setVal('ph', d.phone);
+  setVal('co', d.company);
+  setVal('cd', d.call_date);
+  setVal('ns-date', d.next_step_date);
+  setVal('ns-owner', d.owner);
+  setVal('notes', d.notes);
+
+  setRadio('s-hc', d.quick_headcount_band);
+  setRadio('s-type', d.quick_space_type);
+  setRadio('p-trigger', d.quick_trigger);
+  setRadio('p-timeline', d.quick_timeline);
+  setRadio('a-level', d.quick_authority_level);
+  setRadio('a-open', d.quick_openness);
+  setRadio('c-budget', d.quick_budget_sense);
+  setRadio('e-done', d.quick_fitout_experience);
+  setRadio('e-appoint', d.quick_appointment_route);
+  setRadio('e-others', d.quick_others_involved);
+  setRadio('e-next', d.quick_next_step || d.next_step);
+
+  score();
+}
+
+async function loadSpaceData(){
+  const params = new URLSearchParams(window.location.search);
+  const dealId = params.get('dealId');
+  if(!dealId) { handleDealModeChange(); return; }
+
+  document.getElementById('deal-record-id').value = dealId;
+  document.getElementById('create-new-deal').checked = false;
+  handleDealModeChange();
+
+  try {
+    const res = await fetch(`${MAKE_LOAD_WEBHOOK_URL}?dealId=${encodeURIComponent(dealId)}`);
+    if(!res.ok) throw new Error('Load returned ' + res.status);
+    const data = await res.json();
+    if(data && !data.error) populateForm(data);
+  } catch(e){
+    console.log('No existing quick SPACE data found', e);
+  }
+}
+
+
+loadSettings();
+window.addEventListener('DOMContentLoaded', loadSpaceData);
+</script>
+</body>
+</html>
