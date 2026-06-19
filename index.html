@@ -267,6 +267,9 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
         </div>
       </div>
       <div class="r2 mt8">
+        <div class="fg"><label>Deal Record ID <span style="font-weight:400;font-size:10px;text-transform:none;">(auto from HubSpot)</span></label>
+          <input id="deal-record-id" placeholder="Fills automatically when opened from a deal" oninput="updateDealModeStatus()">
+        </div>
         <div class="fg">
           <label>Create New Deal?</label>
           <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--dark);text-transform:none;letter-spacing:0;">
@@ -586,17 +589,15 @@ document.getElementById('amount').addEventListener('input',()=>{ document.getEle
 // ═══════════════════════════════════════════════
 // Deal mode (create vs update)
 // ═══════════════════════════════════════════════
+function dealRecordId(){ return v('deal-record-id'); }
 function updateDealModeStatus(){
   const createEl=document.getElementById('create-new-deal');
   const status=document.getElementById('deal-mode-status');
-  if(DEAL_ID){
-    status.textContent=`Mode: updating existing deal #${DEAL_ID} (opened from HubSpot).`;
-    createEl.checked=false; createEl.disabled=true;
-  } else if(createEl.checked){
-    status.textContent='Mode: creating a new deal.';
-  } else {
-    status.textContent='Mode: HubSpot will match an existing deal by contact + company, or create one if none is found.';
-  }
+  const id=dealRecordId();
+  createEl.disabled = !!id;
+  if(id){ createEl.checked=false; status.textContent=`Mode: updating existing deal #${id}.`; }
+  else if(createEl.checked){ status.textContent='Mode: creating a new deal.'; }
+  else { status.textContent='Mode: HubSpot will match an existing deal by contact + company, or create one if none is found.'; }
 }
 
 // ═══════════════════════════════════════════════
@@ -686,6 +687,7 @@ function doReset(){
   document.querySelectorAll('input[type=text],input[type=email],input[type=tel],input[type=date],input[type=number],textarea').forEach(el=>{ el.value=''; });
   document.querySelectorAll('select').forEach(s=>s.value='');
   document.getElementById('ns-custom').value='';
+  document.getElementById('deal-record-id').value = DEAL_ID || '';
   document.getElementById('create-new-deal').checked = !DEAL_ID;
   delete document.getElementById('dn').dataset.manual;
   delete document.getElementById('amount').dataset.manual;
@@ -760,13 +762,14 @@ async function submitToHubSpot(){
     return;
   }
   const {sc,total,label}=score();
-  const createNew = DEAL_ID ? false : document.getElementById('create-new-deal').checked;
+  const recId = dealRecordId();
+  const createNew = recId ? false : document.getElementById('create-new-deal').checked;
 
   const payload={
     source_tool: SOURCE_TOOL,
     // mode
     create_new_deal: String(createNew),
-    deal_record_id: DEAL_ID || '',
+    deal_record_id: recId,
     // contact
     firstname: v('fn'), lastname: v('ln'), company: v('co'),
     job_title: v('jt'), phone: v('ph'), email: v('em'),
@@ -819,7 +822,7 @@ async function submitToHubSpot(){
     closeProgress();
     if(!r.ok){ showError('The HubSpot webhook returned an error.', `HTTP ${r.status}. Try again — if it keeps failing, send Morgan the time and the deal name.`); return; }
     showSuccess([
-      createNew ? `Deal will be created: ${payload.dealname}` : `Deal ${DEAL_ID?('#'+DEAL_ID):''} will be updated`,
+      createNew ? `Deal will be created: ${payload.dealname}` : `Deal ${recId?('#'+recId):''} will be updated`,
       `Score sent: ${payload.space_score}/20 — ${label}`,
       `Owner: ${payload.owner_name||'—'}`,
       `Task queued: ${payload.task_title} (due ${payload.next_step_date})`
@@ -831,9 +834,8 @@ async function submitToHubSpot(){
   }
 }
 
-// ═══════════════════════════════════════════════
 // Init
-// ═══════════════════════════════════════════════
+if(DEAL_ID) document.getElementById('deal-record-id').value = DEAL_ID;
 document.getElementById('create-new-deal').checked = !DEAL_ID;
 updateDealModeStatus();
 score();
