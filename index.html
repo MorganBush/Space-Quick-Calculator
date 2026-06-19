@@ -16,7 +16,8 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
 
 /* ── Header ── */
 .hdr { background: var(--dark); padding: 12px 24px; display: flex; align-items: center; gap: 14px; }
-.hdr-logo svg { width: 40px; height: auto; }
+.hdr-logo { width: 40px; height: 32px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.hdr-logo svg { width: 40px; height: auto; display: block; }
 .hdr-title { color: #fff; font-size: 17px; font-weight: 700; letter-spacing: -.3px; }
 .hdr-sub { color: var(--mint); font-size: 11px; margin-top: 1px; }
 .hdr-right { margin-left: auto; display: flex; gap: 8px; }
@@ -65,6 +66,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
 /* ── Fields ── */
 .fg { display: flex; flex-direction: column; gap: 4px; }
 .fg label { font-size: 10px; font-weight: 700; color: var(--mid); text-transform: uppercase; letter-spacing: .5px; }
+.fg label .req { color: var(--red); margin-left: 2px; }
 .fg input, .fg select, .fg textarea {
   border: 1.5px solid #e0dedd; border-radius: 7px; padding: 7px 10px;
   font-size: 13px; color: var(--dark); background: #fff; outline: none;
@@ -73,6 +75,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
 .fg input:focus, .fg select:focus, .fg textarea:focus { border-color: var(--mint); }
 .fg select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a5655' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
 .fg textarea { resize: none; font-family: inherit; min-height: 56px; }
+.fg input.invalid, .fg select.invalid { border-color: var(--red); background: #fff7f7; }
 
 /* ── Radio pills ── */
 .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
@@ -88,6 +91,9 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
 /* ── Section divider ── */
 .divider { height: 1px; background: var(--mint-light); margin: 10px 0; }
 
+/* ── Suggested value ── */
+.value-hint { font-size: 12px; color: var(--green); font-weight: 700; margin-top: 5px; padding: 6px 10px; background: #f0faf5; border-radius: 7px; border: 1px solid var(--mint-light); display: none; }
+
 /* ── Actions ── */
 .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .mode-status { font-size: 12px; color: var(--mid); padding: 6px 10px; background: var(--mint-pale); border-radius: 8px; border: 1px solid var(--mint-light); }
@@ -96,28 +102,19 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
 /* ── Modals ── */
 .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 100; display: none; align-items: center; justify-content: center; }
 .overlay.show { display: flex; }
-.modal { background: #fff; border-radius: 14px; padding: 24px 28px; width: min(480px, 94vw); box-shadow: 0 8px 40px rgba(0,0,0,.25); max-height: 88vh; overflow-y: auto; }
+.modal { background: #fff; border-radius: 14px; padding: 24px 28px; width: min(500px, 94vw); box-shadow: 0 8px 40px rgba(0,0,0,.25); max-height: 88vh; overflow-y: auto; }
 .modal h2 { font-size: 17px; font-weight: 700; margin-bottom: 16px; }
-.modal-row { margin-bottom: 12px; }
-.modal-row label { display: block; font-size: 11px; font-weight: 700; color: var(--mid); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .4px; }
-.modal-row input { width: 100%; border: 1.5px solid #e0dedd; border-radius: 7px; padding: 8px 12px; font-size: 13px; outline: none; }
-.modal-row input:focus { border-color: var(--mint); }
-.modal-hint { font-size: 11px; color: var(--mid); margin-top: 5px; line-height: 1.5; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
 .progress-modal { text-align: center; }
 .spinner { width: 36px; height: 36px; border: 4px solid var(--mint-light); border-top-color: var(--mint); border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 12px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .success-modal .si { font-size: 36px; margin-bottom: 10px; }
 .success-modal ul { text-align: left; font-size: 13px; margin: 10px 0; padding-left: 18px; line-height: 2; }
-.owner-row { display: grid; grid-template-columns: 1fr 1fr auto; gap: 6px; margin-bottom: 6px; align-items: center; }
-.owner-row input { border: 1.5px solid #e0dedd; border-radius: 7px; padding: 7px 10px; font-size: 12px; outline: none; width: 100%; }
-.owner-row .del-btn { background: #fee; border: none; border-radius: 6px; padding: 6px 10px; cursor: pointer; color: var(--red); font-size: 15px; }
-.stage-map { width: 100%; border-collapse: collapse; font-size: 12px; }
-.stage-map td { padding: 4px 0; vertical-align: middle; }
-.stage-map td:first-child { color: var(--mid); width: 52%; font-weight: 600; }
-.stage-map input { border: 1.5px solid #e0dedd; border-radius: 7px; padding: 6px 10px; font-size: 12px; outline: none; width: 100%; }
-.stage-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
 .reset-modal p { font-size: 14px; margin-bottom: 16px; }
+.error-modal h2 { color: var(--red); }
+.error-modal p { font-size: 13px; line-height: 1.6; margin-bottom: 4px; }
+.error-detail { font-size: 12px; color: var(--mid); margin-top: 8px; padding: 8px 10px; background: #fff5f5; border-radius: 7px; border: 1px solid #fdd; }
+.error-detail ul { margin: 4px 0 0 16px; }
 </style>
 </head>
 <body>
@@ -125,8 +122,8 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
 <!-- Header -->
 <header class="hdr">
   <div class="hdr-logo">
-    <svg viewBox="0 0 72 56" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <text x="2" y="34" font-family="'Segoe UI',sans-serif" font-weight="900" font-size="32" fill="#AED8C7">Z</text>
+    <!-- Zentura mark -->
+    <svg viewBox="0 0 72 56" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Zentura">
       <path fill-rule="evenodd" clip-rule="evenodd"
         d="M36 56C16.118 56 0 38.091 0 16H14.4C14.4 30.359 24.03 42 36 42C47.97 42 57.6 30.359 57.6 16H72C72 38.091 55.882 56 36 56Z"
         fill="#AED8C7"/>
@@ -167,13 +164,13 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
       <div class="sdot-label">E</div>
     </div>
   </div>
-  <div class="score-hint">Fill in what you know — score updates live. Aim for as many fields as you can capture on the call.</div>
+  <div class="score-hint">Fill in what you know — score updates live. Stage is set automatically from the score band shown above.</div>
 </div>
 
 <!-- Main -->
 <div class="main">
 
-  <!-- Prospect -->
+  <!-- Prospect + Owner -->
   <div class="card">
     <div class="card-hdr">
       <div class="section-letter" style="background:var(--dark);color:var(--mint);">✦</div>
@@ -183,16 +180,29 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
       <div class="r3">
         <div class="fg"><label>First Name</label><input id="fn" placeholder="First name" oninput="autoDeal()"></div>
         <div class="fg"><label>Last Name</label><input id="ln" placeholder="Last name" oninput="autoDeal()"></div>
-        <div class="fg"><label>Company</label><input id="co" placeholder="Company name" oninput="autoDeal()"></div>
+        <div class="fg"><label>Company <span class="req">*</span></label><input id="co" placeholder="Company name" oninput="autoDeal()"></div>
       </div>
       <div class="r3 mt8">
         <div class="fg"><label>Their Role</label><input id="jt" placeholder="e.g. Office Manager"></div>
         <div class="fg"><label>Phone</label><input id="ph" type="tel" placeholder="+44…"></div>
         <div class="fg"><label>Email</label><input id="em" type="email" placeholder="Optional"></div>
       </div>
-      <div class="r2 mt8">
+      <div class="r3 mt8">
         <div class="fg"><label>Deal Name <span style="font-weight:400;font-size:10px;text-transform:none;">(auto)</span></label><input id="dn" placeholder="Company — Office Fit-Out"></div>
         <div class="fg"><label>Call Date</label><input id="cd" type="date"></div>
+        <div class="fg"><label>Owner <span class="req">*</span></label>
+          <select id="owner">
+            <option value="">— Select —</option>
+            <option value="50870552">Sarah Rattu</option>
+            <option value="30239022">Armani Hutchins</option>
+            <option value="49656912">Sally Curle</option>
+            <option value="66800176">Mathew Roffey</option>
+            <option value="30364279">George Tame</option>
+            <option value="30122606">Joseph Barnes Austin</option>
+            <option value="49656686">Gerry Ward</option>
+            <option value="48696418">Morgan Bush</option>
+          </select>
+        </div>
       </div>
     </div>
   </div>
@@ -204,21 +214,72 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
       <div class="card-title">Deal Details</div>
     </div>
     <div class="card-body">
-      <div class="r2">
+      <div class="r3">
+        <div class="fg"><label>Pipeline <span class="req">*</span></label>
+          <select id="pipeline">
+            <option value="">— Select —</option>
+            <option value="57438197">Zentura BD Pipeline</option>
+            <option value="default">Zentura Sales Pipeline</option>
+          </select>
+        </div>
+        <div class="fg"><label>Deal Type <span class="req">*</span></label>
+          <select id="deal-type">
+            <option value="">— Select —</option>
+            <option value="newbusiness">New Business</option>
+            <option value="existingbusiness">Existing Business</option>
+          </select>
+        </div>
+        <div class="fg"><label>Project Type <span class="req">*</span></label>
+          <select id="project-type" onchange="updateSuggestedValue()">
+            <option value="">— Select —</option>
+            <option value="Refurbishment">Refurbishment</option>
+            <option value="Occupied Refurbishment">Occupied Refurbishment</option>
+            <option value="Relocation">Relocation</option>
+            <option value="Expansion">Expansion</option>
+            <option value="Industrial">Industrial</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="r3 mt8">
+        <div class="fg"><label>Amount (£) <span class="req">*</span></label>
+          <input id="amount" type="number" min="0" placeholder="Estimated deal value">
+        </div>
+        <div class="fg"><label>Target Appointment Date <span class="req">*</span></label>
+          <input id="target-date" type="date">
+        </div>
+        <div class="fg"><label>Deal Source</label>
+          <select id="deal-source">
+            <option value="">— Select —</option>
+            <option value="Phone Call">Phone Call</option>
+            <option value="Manual Email">Manual Email</option>
+            <option value="Sequence Email">Sequence Email</option>
+            <option value="LinkedIn">LinkedIn</option>
+            <option value="WhatsApp">WhatsApp</option>
+            <option value="Marketing Email">Marketing Email</option>
+            <option value="PPC">PPC</option>
+            <option value="Referral">Referral</option>
+            <option value="Organic Search">Organic Search</option>
+            <option value="Signal">Signal</option>
+            <option value="Networking">Networking</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="r2 mt8">
         <div class="fg">
           <label>Create New Deal?</label>
           <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--dark);text-transform:none;letter-spacing:0;">
-            <input id="create-new-deal" type="checkbox" style="width:auto;" onchange="handleDealModeChange()">
+            <input id="create-new-deal" type="checkbox" style="width:auto;" onchange="updateDealModeStatus()">
             Yes, create a new deal
           </label>
         </div>
-        <div class="fg"><label>Deal Record ID</label><input id="deal-record-id" placeholder="HubSpot deal record ID" oninput="handleDealModeChange()"></div>
       </div>
-      <div class="mode-status mt8" id="deal-mode-status">Choose create new deal or enter a deal record ID.</div>
+      <div class="mode-status mt8" id="deal-mode-status">Mode: creating a new deal.</div>
     </div>
   </div>
 
-  <!-- SPACE Quick Grid -->
+  <!-- S: Scope -->
   <div class="card">
     <div class="card-hdr">
       <div class="section-letter">S</div>
@@ -226,28 +287,15 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
       <div class="dots" id="dots-S-hdr"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
     </div>
     <div class="card-body">
-      <div class="fg"><label>Headcount / Office Size</label>
-        <div class="pills" id="s-hc-pills">
-          <label class="pill"><input type="radio" name="s-hc" value="under20" onchange="score()"><span>Under 20</span></label>
-          <label class="pill"><input type="radio" name="s-hc" value="20-50" onchange="score()"><span>20–50</span></label>
-          <label class="pill"><input type="radio" name="s-hc" value="50-100" onchange="score()"><span>50–100</span></label>
-          <label class="pill"><input type="radio" name="s-hc" value="100-250" onchange="score()"><span>100–250</span></label>
-          <label class="pill"><input type="radio" name="s-hc" value="250plus" onchange="score()"><span>250+</span></label>
-          <label class="pill"><input type="radio" name="s-hc" value="unknown" onchange="score()"><span>Unknown</span></label>
-        </div>
-      </div>
-      <div class="fg mt8"><label>What are they looking for? <span style="font-weight:400;font-size:10px;text-transform:none;">(optional)</span></label>
-        <div class="pills">
-          <label class="pill"><input type="radio" name="s-type" value="New office" onchange="score()"><span>New office</span></label>
-          <label class="pill"><input type="radio" name="s-type" value="Refurbishment" onchange="score()"><span>Refurbishment</span></label>
-          <label class="pill"><input type="radio" name="s-type" value="Office move" onchange="score()"><span>Office move</span></label>
-          <label class="pill"><input type="radio" name="s-type" value="Expansion" onchange="score()"><span>Expansion</span></label>
-          <label class="pill"><input type="radio" name="s-type" value="Not clear" onchange="score()"><span>Not clear yet</span></label>
-        </div>
+      <div class="fg">
+        <label>Office Size (sq ft)</label>
+        <input type="number" id="s-sqft" placeholder="e.g. 5000" min="0" oninput="score(); updateSuggestedValue()">
+        <div class="value-hint" id="s-value-hint"></div>
       </div>
     </div>
   </div>
 
+  <!-- P: Purpose -->
   <div class="card">
     <div class="card-hdr">
       <div class="section-letter">P</div>
@@ -276,6 +324,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
     </div>
   </div>
 
+  <!-- A: Authority -->
   <div class="card">
     <div class="card-hdr">
       <div class="section-letter">A</div>
@@ -285,9 +334,9 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
     <div class="card-body">
       <div class="fg"><label>Their Level</label>
         <div class="pills">
-          <label class="pill"><input type="radio" name="a-level" value="dm" onchange="score()"><span>Decision maker (CEO/MD/Director)</span></label>
-          <label class="pill"><input type="radio" name="a-level" value="budget" onchange="score()"><span>Budget holder (CFO/FD)</span></label>
-          <label class="pill"><input type="radio" name="a-level" value="influencer" onchange="score()"><span>Influencer (Office / Facilities)</span></label>
+          <label class="pill"><input type="radio" name="a-level" value="dm" onchange="score()"><span>Decision maker</span></label>
+          <label class="pill"><input type="radio" name="a-level" value="budget" onchange="score()"><span>Budget holder</span></label>
+          <label class="pill"><input type="radio" name="a-level" value="influencer" onchange="score()"><span>Influencer</span></label>
           <label class="pill"><input type="radio" name="a-level" value="gatekeeper" onchange="score()"><span>Gatekeeper / PA</span></label>
           <label class="pill"><input type="radio" name="a-level" value="unknown" onchange="score()"><span>Unknown</span></label>
         </div>
@@ -302,6 +351,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
     </div>
   </div>
 
+  <!-- C: Cost -->
   <div class="card">
     <div class="card-hdr">
       <div class="section-letter">C</div>
@@ -320,6 +370,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
     </div>
   </div>
 
+  <!-- E: Execution -->
   <div class="card">
     <div class="card-hdr">
       <div class="section-letter">E</div>
@@ -356,26 +407,23 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
     </div>
   </div>
 
-  <!-- Next Step -->
+  <!-- Next Step (obligatory task) -->
   <div class="card">
     <div class="card-hdr">
       <div class="section-letter" style="background:var(--mint-light);color:var(--dark);">→</div>
-      <div class="card-title">Next Step</div>
+      <div class="card-title">Next Step <span style="font-size:11px;font-weight:400;color:var(--mid);">— a future task is created on the deal</span></div>
     </div>
     <div class="card-body">
-      <div class="fg"><label>Agreed action</label>
-        <div class="pills">
-          <label class="pill"><input type="radio" name="e-next" value="meeting" onchange="score()"><span>Meeting booked</span></label>
-          <label class="pill"><input type="radio" name="e-next" value="callback" onchange="score()"><span>Call back agreed</span></label>
-          <label class="pill"><input type="radio" name="e-next" value="info" onchange="score()"><span>Sending credentials / info</span></label>
-          <label class="pill"><input type="radio" name="e-next" value="nothing" onchange="score()"><span>No next step</span></label>
+      <div class="r2">
+        <div class="fg"><label>Task Title <span class="req">*</span></label>
+          <input id="task-title" type="text" placeholder="e.g. Call back to book site visit">
+        </div>
+        <div class="fg"><label>Next Activity Date <span class="req">*</span></label>
+          <input id="ns-date" type="date" >
         </div>
       </div>
-      <div class="r2 mt8">
-        <div class="fg"><label>Follow-up Date</label><input id="ns-date" type="date"></div>
-        <div class="fg"><label>Owner</label>
-          <select id="ns-owner"><option value="">— Select —</option></select>
-        </div>
+      <div class="fg mt8"><label>Detail / agreed action (optional)</label>
+        <input id="ns-custom" type="text" placeholder="e.g. Meeting booked for 12th June…">
       </div>
     </div>
   </div>
@@ -388,6 +436,15 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
     </div>
     <div class="card-body">
       <div class="fg">
+        <label>Call Outcome</label>
+        <div class="pills">
+          <label class="pill"><input type="radio" name="call-outcome" value="Potential Lead"><span>Potential Lead</span></label>
+          <label class="pill"><input type="radio" name="call-outcome" value="Lead"><span>Lead</span></label>
+          <label class="pill"><input type="radio" name="call-outcome" value="Hot Lead"><span>Hot Lead</span></label>
+          <label class="pill"><input type="radio" name="call-outcome" value="Appointment"><span>Appointment</span></label>
+        </div>
+      </div>
+      <div class="fg mt8">
         <textarea id="notes" placeholder="Key quotes, objections, context, who referred them…" style="min-height:64px;"></textarea>
       </div>
     </div>
@@ -397,7 +454,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
   <div class="card">
     <div class="card-body">
       <div class="actions">
-        <button class="btn btn-mint" onclick="pushToMake()">Save SPACE Quick Qualification</button>
+        <button class="btn btn-mint" onclick="submitToHubSpot()">Save to HubSpot</button>
         <div class="actions-sep"></div>
         <div id="push-status" style="font-size:12px;color:var(--mid);"></div>
       </div>
@@ -406,72 +463,41 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
 
 </div><!-- /main -->
 
-<!-- Settings Modal -->
-<div class="overlay" id="ov-settings">
-  <div class="modal">
-    <h2>⚙ HubSpot Settings</h2>
-    <div class="modal-row">
-      <label>Private App Token</label>
-      <input id="cfg-token" type="password" placeholder="pat-na1-…">
-      <div class="modal-hint">Settings → Integrations → Private Apps. Needs CRM read/write scopes.</div>
-    </div>
-    <div class="modal-row">
-      <label>Pipeline ID</label>
-      <input id="cfg-pipe" placeholder="e.g. default">
-    </div>
-    <div class="modal-row">
-      <label>Deal Stages — mapped to lead status</label>
-      <div class="modal-hint" style="margin-bottom:8px;">Enter the HubSpot stage ID for each outcome.</div>
-      <table class="stage-map">
-        <tr><td><span class="stage-dot" style="background:var(--amber);"></span>Potential Lead</td><td><input id="stg-pot" placeholder="stage ID"></td></tr>
-        <tr><td><span class="stage-dot" style="background:var(--mint);"></span>Lead</td><td><input id="stg-lead" placeholder="stage ID"></td></tr>
-        <tr><td><span class="stage-dot" style="background:#50e89a;"></span>Hot Lead</td><td><input id="stg-hot" placeholder="stage ID"></td></tr>
-      </table>
-    </div>
-    <div class="modal-row">
-      <label>Team Members</label>
-      <button class="btn btn-mint btn-sm" style="margin-bottom:8px;" onclick="loadOwnersFromHubSpot()">⬇ Load from HubSpot</button>
-      <div id="owners-fetch-status" style="font-size:11px;color:var(--mid);margin-bottom:6px;"></div>
-      <div id="owners-list"></div>
-      <button class="btn btn-dark btn-sm" style="margin-top:6px;" onclick="addOwnerRow('','')">+ Add manually</button>
-    </div>
-    <div class="modal-row">
-      <label>Notification Email</label>
-      <input id="cfg-notify" type="email" placeholder="gerry@zenturaworkspace.co.uk">
-    </div>
-    <div class="modal-row">
-      <label>CORS Proxy URL <span style="font-weight:400;color:#aaa;">(optional)</span></label>
-      <input id="cfg-proxy" placeholder="https://your-worker.workers.dev">
-    </div>
-    <div class="modal-actions">
-      <button class="btn btn-dark" onclick="saveSettings()">Save</button>
-      <button class="btn btn-outline" style="color:var(--dark);border-color:#ccc;" onclick="closeModal('ov-settings')">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<!-- Progress Modal -->
+<!-- ── Progress Modal ── -->
 <div class="overlay" id="ov-progress">
   <div class="modal progress-modal">
     <div class="spinner"></div>
-    <div style="font-weight:700;font-size:15px;">Pushing to HubSpot…</div>
+    <div style="font-weight:700;font-size:15px;" id="progress-title">Saving to HubSpot…</div>
     <div id="progress-msg" style="font-size:13px;color:var(--mid);margin-top:6px;"></div>
   </div>
 </div>
 
-<!-- Success Modal -->
+<!-- ── Success Modal ── -->
 <div class="overlay" id="ov-success">
   <div class="modal success-modal" style="text-align:center;">
     <div class="si">🎉</div>
-    <div style="font-weight:700;font-size:17px;">Pushed to HubSpot!</div>
+    <div style="font-weight:700;font-size:17px;">Sent to HubSpot!</div>
     <ul id="success-list" style="text-align:left;"></ul>
+    <div style="font-size:12px;color:var(--mid);margin-top:4px;">HubSpot is creating the deal, activity and task in the background.</div>
     <div class="modal-actions" style="justify-content:center;">
       <button class="btn btn-mint" onclick="closeModal('ov-success')">Done</button>
     </div>
   </div>
 </div>
 
-<!-- Reset Modal -->
+<!-- ── Error Modal ── -->
+<div class="overlay" id="ov-error">
+  <div class="modal error-modal">
+    <h2>⚠ Unable to Save</h2>
+    <p id="error-msg"></p>
+    <div id="error-detail" class="error-detail" style="display:none;"></div>
+    <div class="modal-actions">
+      <button class="btn btn-dark" onclick="closeModal('ov-error')">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Reset Modal ── -->
 <div class="overlay" id="ov-reset">
   <div class="modal">
     <h2>↺ Reset</h2>
@@ -484,137 +510,110 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
 </div>
 
 <script>
-// ── Settings ──
-const CFG_KEY = 'zt_quick_cfg';
-function getCfgRaw(){ try { return JSON.parse(localStorage.getItem(CFG_KEY)||'{}'); } catch(e){ return {}; } }
-function getCfg(k){ return getCfgRaw()[k]||''; }
+// ═══════════════════════════════════════════════
+// CONFIG — Make webhooks
+// ═══════════════════════════════════════════════
+const WEBHOOK_CREATE_UPDATE = 'https://hook.eu1.make.com/mde9yampvy3tc3z2s4pbb2yi1l66qpe5';
+const WEBHOOK_GET_DATA       = 'https://hook.eu1.make.com/wo2eqpy56cz1pox9xkd7aw4oscdv6cfo';
+const SOURCE_TOOL            = 'SPACE Quick Qualifier';
 
-function addOwnerRow(name, id){
-  const list = document.getElementById('owners-list');
-  const row = document.createElement('div');
-  row.className = 'owner-row';
-  row.innerHTML = `<input class="owner-name" placeholder="Name" value="${name||''}"><input class="owner-id" placeholder="HubSpot User ID" value="${id||''}"><button class="del-btn" onclick="this.closest('.owner-row').remove()">×</button>`;
-  list.appendChild(row);
-}
+// Deal ID passed in from HubSpot (round-trip), e.g. ?dealId=12345
+let DEAL_ID = new URLSearchParams(location.search).get('dealId') || '';
 
-function populateOwnerDropdown(owners){
-  const sel = document.getElementById('ns-owner');
-  const cur = sel.value;
-  sel.innerHTML = '<option value="">— Select —</option>';
-  (owners||[]).forEach(o=>{
-    if(!o.name) return;
-    const opt = document.createElement('option');
-    opt.value = o.id||'';
-    opt.textContent = o.name;
-    sel.appendChild(opt);
-  });
-  if(cur) sel.value = cur;
-}
+// ═══════════════════════════════════════════════
+// Helpers
+// ═══════════════════════════════════════════════
+function v(id){ const el=document.getElementById(id); return el?el.value.trim():''; }
+function rv(name){ const el=document.querySelector(`input[name="${name}"]:checked`); return el?el.value:''; }
+function setStatus(msg,isError=false){ const el=document.getElementById('push-status'); if(!el)return; el.textContent=msg; el.style.color=isError?'var(--red)':'var(--mid)'; }
+function ownerName(){ const s=document.getElementById('owner'); return s.options[s.selectedIndex]?.text!=='— Select —'?s.options[s.selectedIndex]?.text:''; }
+function formatGBP(n){ return new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP',maximumFractionDigits:0}).format(n); }
 
-async function loadOwnersFromHubSpot(){
-  const token = getCfg('token');
-  const proxy = getCfg('proxy');
-  const status = document.getElementById('owners-fetch-status');
-  if(!token){ status.textContent='⚠ Save your token first.'; return; }
-  status.textContent='Loading…'; status.style.color='var(--mid)';
-  try {
-    const base = proxy ? proxy.replace(/\/$/,'') : 'https://api.hubapi.com';
-    const r = await fetch(`${base}/crm/v3/owners?limit=100`,{ headers:{'Authorization':'Bearer '+token} });
-    if(!r.ok) throw new Error(r.status);
-    const data = await r.json();
-    document.getElementById('owners-list').innerHTML='';
-    (data.results||[]).forEach(o=>{
-      addOwnerRow([o.firstName,o.lastName].filter(Boolean).join(' ')||o.email, String(o.id));
-    });
-    status.textContent=`✓ Loaded ${(data.results||[]).length} members — remove anyone not needed, then Save.`;
-    status.style.color='var(--green)';
-  } catch(e){ status.textContent='⚠ '+e.message; status.style.color='var(--red)'; }
-}
-
-function loadSettings(){
-  try {
-    const c = getCfgRaw();
-    ['token','pipe','notify','proxy'].forEach(k=>{ const el=document.getElementById('cfg-'+k); if(el&&c[k]) el.value=c[k]; });
-    const stages = c.stages||{};
-    ['pot','lead','hot'].forEach(k=>{ const el=document.getElementById('stg-'+k); if(el) el.value=stages[k]||''; });
-    const owners = c.owners||[];
-    owners.forEach(o=>addOwnerRow(o.name,o.id));
-    if(owners.length===0) addOwnerRow('','');
-    populateOwnerDropdown(owners);
-  } catch(e){ addOwnerRow('',''); }
-}
-
-function saveSettings(){
-  const c = getCfgRaw();
-  ['token','pipe','notify','proxy'].forEach(k=>{ const el=document.getElementById('cfg-'+k); if(el) c[k]=el.value.trim(); });
-  c.stages={};
-  ['pot','lead','hot'].forEach(k=>{ const el=document.getElementById('stg-'+k); if(el) c.stages[k]=el.value.trim(); });
-  c.owners=[];
-  document.querySelectorAll('.owner-row').forEach(row=>{
-    const name=row.querySelector('.owner-name').value.trim();
-    const id=row.querySelector('.owner-id').value.trim();
-    if(name) c.owners.push({name,id});
-  });
-  localStorage.setItem(CFG_KEY,JSON.stringify(c));
-  populateOwnerDropdown(c.owners);
-  closeModal('ov-settings');
-  document.getElementById('push-status').textContent='✓ Settings saved';
-  setTimeout(()=>{ document.getElementById('push-status').textContent=''; },3000);
-}
-
-function getStageForLabel(label){
-  const keyMap={'Potential Lead':'pot','Lead':'lead','Hot Lead':'hot'};
-  const key=keyMap[label]||'pot';
-  const stages=getCfgRaw().stages||{};
-  return stages[key]||stages['pot']||'appointmentscheduled';
-}
-
-// ── Modals ──
-function openSettings(){ document.getElementById('ov-settings').classList.add('show'); }
+// ═══════════════════════════════════════════════
+// Modals
+// ═══════════════════════════════════════════════
 function openReset(){ document.getElementById('ov-reset').classList.add('show'); }
 function closeModal(id){ document.getElementById(id).classList.remove('show'); }
-document.querySelectorAll('.overlay').forEach(ov=>{ ov.addEventListener('click',e=>{ if(e.target===ov) closeModal(ov.id); }); });
-
-// ── Reset ──
-function doReset(){
-  document.querySelectorAll('input[type=radio]').forEach(r=>r.checked=false);
-  document.querySelectorAll('input[type=text],input[type=email],input[type=tel],input[type=date],textarea,select').forEach(el=>{
-    if(!el.id.startsWith('cfg-')&&!el.id.startsWith('stg-')&&!el.classList.contains('owner-name')&&!el.classList.contains('owner-id')) el.value='';
-  });
-  delete document.getElementById('dn').dataset.manual;
-  score();
-  closeModal('ov-reset');
+document.querySelectorAll('.overlay').forEach(ov=>{ ov.addEventListener('click', e=>{ if(e.target===ov) closeModal(ov.id); }); });
+function openProgress(msg){ document.getElementById('progress-msg').textContent=msg||''; document.getElementById('ov-progress').classList.add('show'); }
+function closeProgress(){ document.getElementById('ov-progress').classList.remove('show'); }
+function showError(msg, detailHtml){
+  document.getElementById('error-msg').textContent=msg;
+  const det=document.getElementById('error-detail');
+  if(detailHtml){ det.innerHTML=detailHtml; det.style.display='block'; } else det.style.display='none';
+  document.getElementById('ov-error').classList.add('show');
 }
+function showSuccess(items){ document.getElementById('success-list').innerHTML=items.map(i=>`<li>${i}</li>`).join(''); document.getElementById('ov-success').classList.add('show'); }
 
-// ── Auto deal name ──
+// ═══════════════════════════════════════════════
+// Auto deal name
+// ═══════════════════════════════════════════════
 function autoDeal(){
   const dn=document.getElementById('dn');
-  if(!dn.dataset.manual){ const co=document.getElementById('co').value.trim(); dn.value=co?co+' — Office Fit-Out':''; }
+  if(!dn.dataset.manual){ const co=v('co'); dn.value=co?co+' — Office Fit-Out':''; }
 }
 document.getElementById('dn').addEventListener('input',()=>{ document.getElementById('dn').dataset.manual='1'; });
 
-// ── Helpers ──
-function v(id){ const el=document.getElementById(id); return el?el.value.trim():''; }
-function rv(name){ const el=document.querySelector(`input[name="${name}"]:checked`); return el?el.value:''; }
+// ═══════════════════════════════════════════════
+// Suggested project value (also pre-fills Amount)
+// ═══════════════════════════════════════════════
+function getSuggestedValueRange(sqft, type){
+  let rateMin, rateMax;
+  switch(type){
+    case 'Refurbishment':           rateMin=45; rateMax=75; break;
+    case 'Occupied Refurbishment':  rateMin=50; rateMax=80; break;
+    case 'Relocation':              rateMin=70; rateMax=110; break;
+    case 'Expansion':               rateMin=65; rateMax=100; break;
+    case 'Industrial':              rateMin=40; rateMax=65; break;
+    default:                        rateMin=55; rateMax=95;
+  }
+  return { min: sqft*rateMin, max: sqft*rateMax, mid: Math.round(sqft*((rateMin+rateMax)/2)) };
+}
+function updateSuggestedValue(){
+  const sqft=parseInt(v('s-sqft'))||0;
+  const hint=document.getElementById('s-value-hint');
+  const type=v('project-type');
+  if(!sqft){ hint.style.display='none'; return; }
+  const range=getSuggestedValueRange(sqft,type);
+  hint.textContent=`💰 Estimated project value: ${formatGBP(range.min)} – ${formatGBP(range.max)}`;
+  hint.style.display='block';
+  // Pre-fill Amount with the mid estimate unless the rep has typed their own
+  const amt=document.getElementById('amount');
+  if(!amt.dataset.manual) amt.value=range.mid;
+}
+document.getElementById('amount').addEventListener('input',()=>{ document.getElementById('amount').dataset.manual='1'; });
 
-// ── Scoring ──
+// ═══════════════════════════════════════════════
+// Deal mode (create vs update)
+// ═══════════════════════════════════════════════
+function updateDealModeStatus(){
+  const createEl=document.getElementById('create-new-deal');
+  const status=document.getElementById('deal-mode-status');
+  if(DEAL_ID){
+    status.textContent=`Mode: updating existing deal #${DEAL_ID} (opened from HubSpot).`;
+    createEl.checked=false; createEl.disabled=true;
+  } else if(createEl.checked){
+    status.textContent='Mode: creating a new deal.';
+  } else {
+    status.textContent='Mode: HubSpot will match an existing deal by contact + company, or create one if none is found.';
+  }
+}
+
+// ═══════════════════════════════════════════════
+// Scoring  (unchanged logic)
+// ═══════════════════════════════════════════════
 function calcS(){
   let s=0;
-  const hc=rv('s-hc');
-  if(hc==='250plus') s=4;
-  else if(hc==='100-250') s=3;
-  else if(hc==='50-100') s=2.5;
-  else if(hc==='20-50') s=1.5;
-  else if(hc==='under20') s=0.5;
-  const type=rv('s-type');
-  if(type && type!=='Not clear') s=Math.min(4,s+0.5);
-  return Math.min(4,Math.round(s*10)/10);
+  const sqft=parseInt(v('s-sqft'))||0;
+  if(sqft>0) s+=2;
+  if(v('project-type')) s+=2;
+  return Math.min(4,s);
 }
 function calcP(){
   let s=0;
   const tr=rv('p-trigger');
   if(tr==='Lease expiry') s+=2;
-  else if(tr==='Growing headcount'||tr==='Consolidating'||tr==='Refreshing / rebrand') s+=1.5;
+  else if(['Growing headcount','Consolidating','Refreshing / rebrand'].includes(tr)) s+=1.5;
   else if(tr==='Exploring options') s+=0.5;
   const tl=rv('p-timeline');
   if(tl==='urgent') s+=2;
@@ -643,41 +642,26 @@ function calcC(){
 }
 function calcE(){
   let s=0;
-  // Have they done this before?
   const done=rv('e-done');
   if(done==='recent') s+=1.5;
   else if(done==='prev') s+=1;
   else if(done==='first') s+=0.5;
-  // How they appoint
   const ap=rv('e-appoint');
   if(ap==='negotiated') s+=2;
   else if(ap==='referral') s+=1.5;
   else if(ap==='quotes') s+=1;
   else if(ap==='tender') s+=0.4;
-  // Others involved (direct = better for us)
   const ot=rv('e-others');
   if(ot==='none') s+=0.5;
   else if(ot==='inhouse') s+=0.3;
   return Math.min(4,Math.round(s*10)/10);
 }
-
 function badge(total){
   if(total>=14) return ['Hot Lead','sb-hot'];
   if(total>=8)  return ['Lead','sb-lead'];
   if(total>=1)  return ['Potential Lead','sb-pot'];
   return ['—','sb-none'];
 }
-
-function renderDots(key,val){
-  const disp=Math.round(val);
-  ['','- hdr'].forEach(suffix=>{
-    const id='dots-'+key+(suffix===''?'':suffix.trim().replace(' ','-'));
-    // handle both dot group IDs
-    const actualId = suffix==='' ? 'dots-'+key : 'dots-'+key+'-hdr';
-    document.querySelectorAll(`#${actualId} .dot`).forEach((d,i)=>{ d.className='dot'+(i<disp?' on':''); });
-  });
-}
-
 function score(){
   const sc={S:calcS(),P:calcP(),A:calcA(),C:calcC(),E:calcE()};
   const total=Math.round((sc.S+sc.P+sc.A+sc.C+sc.E)*10)/10;
@@ -691,103 +675,122 @@ function score(){
       document.querySelectorAll(`#${id} .dot`).forEach((d,i)=>{ d.className='dot'+(i<disp?' on':''); });
     });
   });
-}
-score();
-
-// ── Copy Summary ──
-function copySummary(){
-  const sc={S:calcS(),P:calcP(),A:calcA(),C:calcC(),E:calcE()};
-  const total=Math.round((sc.S+sc.P+sc.A+sc.C+sc.E)*10)/10;
-  const [label]=badge(total);
-  const lines=[
-    'SPACE QUICK QUALIFICATION',
-    `Date: ${v('cd')||new Date().toLocaleDateString('en-GB')}`,
-    '',
-    `Contact: ${v('fn')} ${v('ln')} | ${v('jt')} @ ${v('co')}`,
-    `Phone: ${v('ph')} | Email: ${v('em')}`,
-    '',
-    `SCORE: ${total}/20 — ${label}`,
-    `S:${sc.S}  P:${sc.P}  A:${sc.A}  C:${sc.C}  E:${sc.E}`,
-    '',
-    `[Scope]    Size: ${rv('s-hc')||'Unknown'} | Type: ${rv('s-type')||'Unknown'}`,
-    `[Purpose]  Trigger: ${rv('p-trigger')||'Unknown'} | Timeline: ${rv('p-timeline')||'Unknown'}`,
-    `[Authority] Level: ${rv('a-level')||'Unknown'} | Openness: ${rv('a-open')||'Unknown'}`,
-    `[Cost]     Budget: ${rv('c-budget')||'Unknown'}`,
-    `[Execution] Done before: ${rv('e-done')||'Unknown'} | Appoints via: ${rv('e-appoint')||'Unknown'} | Others: ${rv('e-others')||'Unknown'}`,
-    '',
-    v('notes')?`Notes: ${v('notes')}`:'',
-  ].filter(l=>l!==undefined).join('\n');
-  navigator.clipboard.writeText(lines).then(()=>{
-    document.getElementById('push-status').textContent='✓ Copied';
-    setTimeout(()=>{ document.getElementById('push-status').textContent=''; },2500);
-  });
+  return {sc,total,label};
 }
 
-// ── Make / HubSpot integration ──
-const MAKE_SAVE_WEBHOOK_URL = 'https://hook.eu1.make.com/mde9yampvy3tc3z2s4pbb2yi1l66qpe5';
-const MAKE_LOAD_WEBHOOK_URL = 'https://hook.eu1.make.com/wo2eqpy56cz1pox9xkd7aw4oscdv6cfo';
-
-function setStatus(msg, isError=false){
-  const el = document.getElementById('push-status');
-  if(!el) return;
-  el.textContent = msg;
-  el.style.color = isError ? 'var(--red)' : 'var(--mid)';
+// ═══════════════════════════════════════════════
+// Reset
+// ═══════════════════════════════════════════════
+function doReset(){
+  document.querySelectorAll('input[type=radio]').forEach(r=>r.checked=false);
+  document.querySelectorAll('input[type=text],input[type=email],input[type=tel],input[type=date],input[type=number],textarea').forEach(el=>{ el.value=''; });
+  document.querySelectorAll('select').forEach(s=>s.value='');
+  document.getElementById('ns-custom').value='';
+  document.getElementById('create-new-deal').checked = !DEAL_ID;
+  delete document.getElementById('dn').dataset.manual;
+  delete document.getElementById('amount').dataset.manual;
+  document.getElementById('s-value-hint').style.display='none';
+  document.querySelectorAll('.invalid').forEach(e=>e.classList.remove('invalid'));
+  score(); updateDealModeStatus();
+  closeModal('ov-reset');
 }
 
-function handleDealModeChange(){
-  const createEl = document.getElementById('create-new-deal');
-  const dealEl = document.getElementById('deal-record-id');
-  const status = document.getElementById('deal-mode-status');
-  if(!createEl || !dealEl) return;
+// ═══════════════════════════════════════════════
+// Round-trip: snapshot + restore (space_data_json)
+// ═══════════════════════════════════════════════
+const TEXT_IDS=['fn','ln','co','jt','ph','em','dn','cd','owner','pipeline','deal-type','project-type','amount','target-date','deal-source','s-sqft','task-title','ns-date','ns-custom','notes'];
+const RADIO_NAMES=['p-trigger','p-timeline','a-level','a-open','c-budget','e-done','e-appoint','e-others','call-outcome'];
 
-  if(createEl.checked){
-    dealEl.value = '';
-    dealEl.disabled = true;
-    if(status) status.textContent = 'Mode: Creating a new HubSpot deal';
+function snapshot(){
+  const d={};
+  TEXT_IDS.forEach(id=>{ const el=document.getElementById(id); if(el) d[id]=el.value; });
+  RADIO_NAMES.forEach(n=>{ d[n]=rv(n); });
+  return d;
+}
+function restore(d){
+  if(!d || typeof d!=='object') return;
+  TEXT_IDS.forEach(id=>{ if(d[id]!=null){ const el=document.getElementById(id); if(el) el.value=d[id]; } });
+  RADIO_NAMES.forEach(n=>{ if(d[n]){ const el=document.querySelector(`input[name="${n}"][value="${CSS.escape(d[n])}"]`); if(el) el.checked=true; } });
+  if(d.dn) document.getElementById('dn').dataset.manual='1';
+  if(d.amount) document.getElementById('amount').dataset.manual='1';
+  score(); updateSuggestedValue();
+}
+
+async function prefillFromHubSpot(){
+  if(!DEAL_ID) return;
+  openProgress('Loading saved answers from HubSpot…');
+  try{
+    const r=await fetch(WEBHOOK_GET_DATA,{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({dealId:DEAL_ID}) });
+    const text=await r.text();
+    closeProgress();
+    if(!text) return;                      // brand-new deal with no saved data — fine
+    let data;
+    try{ data=JSON.parse(text); }catch(_){ return; }
+    if(typeof data==='string'){ try{ data=JSON.parse(data); }catch(_){ return; } }
+    restore(data);
+    setStatus('✓ Loaded previous answers for deal #'+DEAL_ID);
+  }catch(e){ closeProgress(); /* non-fatal: rep can still fill in fresh */ }
+}
+
+// ═══════════════════════════════════════════════
+// Validation
+// ═══════════════════════════════════════════════
+function markInvalid(id,bad){ const el=document.getElementById(id); if(el) el.classList.toggle('invalid',bad); }
+function validate(){
+  const problems=[];
+  const createNew = !DEAL_ID && document.getElementById('create-new-deal').checked;
+  const reqs=[
+    ['co','Company'],['owner','Owner'],['pipeline','Pipeline'],['deal-type','Deal Type'],
+    ['project-type','Project Type'],['amount','Amount'],['target-date','Target Appointment Date'],
+    ['task-title','Task Title'],['ns-date','Next Activity Date']
+  ];
+  reqs.forEach(([id,lbl])=>{ const bad=!v(id); markInvalid(id,bad); if(bad) problems.push(lbl); });
+  if(!v('fn') && !v('ln')){ markInvalid('fn',true); markInvalid('ln',true); problems.push('Contact name (first or last)'); }
+  else { markInvalid('fn',false); markInvalid('ln',false); }
+  return problems;
+}
+
+// ═══════════════════════════════════════════════
+// Submit → Make webhook
+// ═══════════════════════════════════════════════
+async function submitToHubSpot(){
+  const problems=validate();
+  if(problems.length){
+    showError('Please complete the required fields before saving:', '<ul>'+problems.map(p=>`<li>${p}</li>`).join('')+'</ul>');
     return;
   }
+  const {sc,total,label}=score();
+  const createNew = DEAL_ID ? false : document.getElementById('create-new-deal').checked;
 
-  dealEl.disabled = false;
-  if(dealEl.value.trim()){
-    if(status) status.textContent = 'Mode: Updating existing HubSpot deal';
-  } else {
-    if(status) status.textContent = 'Choose create new deal or enter a deal record ID.';
-  }
-}
-
-function validateDealMode(){
-  const createNew = document.getElementById('create-new-deal').checked;
-  const dealId = v('deal-record-id');
-  if(createNew && dealId){
-    return 'Choose either Create New Deal or Deal Record ID, not both.';
-  }
-  if(!createNew && !dealId){
-    return 'Tick Create New Deal or enter a Deal Record ID.';
-  }
-  return '';
-}
-
-function quickDataPayload(){
-  const sc={S:calcS(),P:calcP(),A:calcA(),C:calcC(),E:calcE()};
-  const total=Math.round((sc.S+sc.P+sc.A+sc.C+sc.E)*10)/10;
-  const [label]=badge(total);
-  const data = {
-    source_tool: 'SPACE Quick Qualifier',
-    space_version: 'quick-1.0',
-    dealname: v('dn') || (v('co') ? v('co') + ' — Office Fit-Out' : ''),
-    create_new_deal: document.getElementById('create-new-deal').checked,
-    deal_record_id: v('deal-record-id'),
-    call_date: v('cd'),
-
-    firstname: v('fn'),
-    lastname: v('ln'),
-    job_title: v('jt'),
-    email: v('em'),
-    phone: v('ph'),
-    company: v('co'),
-
-    quick_headcount_band: rv('s-hc'),
-    quick_space_type: rv('s-type'),
+  const payload={
+    source_tool: SOURCE_TOOL,
+    // mode
+    create_new_deal: String(createNew),
+    deal_record_id: DEAL_ID || '',
+    // contact
+    firstname: v('fn'), lastname: v('ln'), company: v('co'),
+    job_title: v('jt'), phone: v('ph'), email: v('em'),
+    // owner
+    owner_id: v('owner'), owner_name: ownerName(),
+    // deal
+    dealname: v('dn') || v('co')+' — Office Fit-Out',
+    pipeline: v('pipeline'),
+    deal_type: v('deal-type'),
+    deal_source: v('deal-source'),
+    project_type: v('project-type'),
+    purchase_type: 'Purchase',                 // hard-coded, not shown
+    amount: v('amount'),
+    target_appointment_date: v('target-date'), // → closedate in Make
+    // scores
+    space_score: Math.round(total),
+    space_score_label: label,
+    space_score_scope: sc.S,
+    space_score_purpose: sc.P,
+    space_score_authority: sc.A,
+    space_score_cost: sc.C,
+    space_score_execution: sc.E,
+    // qualitative (quick set)
+    quick_space_type: v('project-type'),
     quick_trigger: rv('p-trigger'),
     quick_timeline: rv('p-timeline'),
     quick_authority_level: rv('a-level'),
@@ -796,110 +799,45 @@ function quickDataPayload(){
     quick_fitout_experience: rv('e-done'),
     quick_appointment_route: rv('e-appoint'),
     quick_others_involved: rv('e-others'),
-    quick_next_step: rv('e-next'),
-
-    next_step: rv('e-next'),
+    quick_headcount_band: '',
+    sqft: v('s-sqft'),
+    call_date: v('cd'),
+    // task (obligatory, hard-coded type=to-do, priority=high in Make)
+    task_title: v('task-title'),
+    next_step: v('ns-custom') || v('task-title'),
     next_step_date: v('ns-date'),
-    owner: v('ns-owner'),
+    // notes
+    call_outcome: rv('call-outcome'),
     notes: v('notes'),
-
-    space_score: total,
-    space_score_label: label,
-    space_score_scope: sc.S,
-    space_score_purpose: sc.P,
-    space_score_authority: sc.A,
-    space_score_cost: sc.C,
-    space_score_execution: sc.E,
-
-    submitted_at: new Date().toISOString()
+    // round-trip snapshot
+    space_data_json: JSON.stringify(snapshot())
   };
-  data.space_data_json = JSON.stringify(data);
-  return data;
-}
 
-async function pushToMake(){
-  const modeError = validateDealMode();
-  if(modeError){ setStatus('✗ ' + modeError, true); return; }
-
-  const data = quickDataPayload();
-  if(!data.company && data.create_new_deal){ setStatus('✗ Company is required to create a new deal.', true); return; }
-  setStatus('Saving...');
-
-  try {
-    const r = await fetch(MAKE_SAVE_WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-    if(!r.ok) throw new Error('Make webhook returned ' + r.status);
-    const t = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-    setStatus('✓ Saved to HubSpot at ' + t);
-  } catch(e){
-    setStatus('✗ Save failed: ' + (e.message||'Unknown error'), true);
+  openProgress('Sending to HubSpot…');
+  try{
+    const r=await fetch(WEBHOOK_CREATE_UPDATE,{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    closeProgress();
+    if(!r.ok){ showError('The HubSpot webhook returned an error.', `HTTP ${r.status}. Try again — if it keeps failing, send Morgan the time and the deal name.`); return; }
+    showSuccess([
+      createNew ? `Deal will be created: ${payload.dealname}` : `Deal ${DEAL_ID?('#'+DEAL_ID):''} will be updated`,
+      `Score sent: ${payload.space_score}/20 — ${label}`,
+      `Owner: ${payload.owner_name||'—'}`,
+      `Task queued: ${payload.task_title} (due ${payload.next_step_date})`
+    ]);
+    setStatus('✓ Sent to HubSpot');
+  }catch(e){
+    closeProgress();
+    showError('Could not reach the HubSpot webhook.', 'Check your internet connection and try again. ('+e.message+')');
   }
 }
 
-function setVal(id,value){
-  const el=document.getElementById(id);
-  if(el && value!==undefined && value!==null) el.value=value;
-}
-
-function setRadio(name,value){
-  if(!value) return;
-  const el=document.querySelector(`input[name="${name}"][value="${CSS.escape(value)}"]`);
-  if(el) el.checked=true;
-}
-
-function populateForm(d){
-  setVal('dn', d.dealname);
-  setVal('fn', d.firstname);
-  setVal('ln', d.lastname);
-  setVal('jt', d.job_title);
-  setVal('em', d.email);
-  setVal('ph', d.phone);
-  setVal('co', d.company);
-  setVal('cd', d.call_date);
-  setVal('ns-date', d.next_step_date);
-  setVal('ns-owner', d.owner);
-  setVal('notes', d.notes);
-
-  setRadio('s-hc', d.quick_headcount_band);
-  setRadio('s-type', d.quick_space_type);
-  setRadio('p-trigger', d.quick_trigger);
-  setRadio('p-timeline', d.quick_timeline);
-  setRadio('a-level', d.quick_authority_level);
-  setRadio('a-open', d.quick_openness);
-  setRadio('c-budget', d.quick_budget_sense);
-  setRadio('e-done', d.quick_fitout_experience);
-  setRadio('e-appoint', d.quick_appointment_route);
-  setRadio('e-others', d.quick_others_involved);
-  setRadio('e-next', d.quick_next_step || d.next_step);
-
-  score();
-}
-
-async function loadSpaceData(){
-  const params = new URLSearchParams(window.location.search);
-  const dealId = params.get('dealId');
-  if(!dealId) { handleDealModeChange(); return; }
-
-  document.getElementById('deal-record-id').value = dealId;
-  document.getElementById('create-new-deal').checked = false;
-  handleDealModeChange();
-
-  try {
-    const res = await fetch(`${MAKE_LOAD_WEBHOOK_URL}?dealId=${encodeURIComponent(dealId)}`);
-    if(!res.ok) throw new Error('Load returned ' + res.status);
-    const data = await res.json();
-    if(data && !data.error) populateForm(data);
-  } catch(e){
-    console.log('No existing quick SPACE data found', e);
-  }
-}
-
-
-loadSettings();
-window.addEventListener('DOMContentLoaded', loadSpaceData);
+// ═══════════════════════════════════════════════
+// Init
+// ═══════════════════════════════════════════════
+document.getElementById('create-new-deal').checked = !DEAL_ID;
+updateDealModeStatus();
+score();
+prefillFromHubSpot();
 </script>
 </body>
 </html>
