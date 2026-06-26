@@ -35,6 +35,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
 .score-total span { font-size: 13px; font-weight: 400; color: #aaa; margin-left: 2px; }
 .score-badge { padding: 5px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; letter-spacing: .3px; white-space: nowrap; }
 .sb-none { background: #2a2727; color: #666; }
+.sb-nq   { background: #3d1a1a; color: var(--red); }
 .sb-pot  { background: #3d2e1a; color: var(--amber); }
 .sb-lead { background: #1a2e25; color: var(--mint); }
 .sb-hot  { background: #1a3d2a; color: #50e89a; }
@@ -164,7 +165,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
       <div class="sdot-label">E</div>
     </div>
   </div>
-  <div class="score-hint">Fill in what you know — score updates live. Stage is set automatically from the score band shown above.</div>
+  <div class="score-hint">Fill in what you know — score updates live. Min. 4/20 to qualify · 4–7 Potential Lead · 8–13 Lead · 14+ Hot Lead</div>
 </div>
 
 <!-- Main -->
@@ -214,14 +215,8 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
       <div class="card-title">Deal Details</div>
     </div>
     <div class="card-body">
-      <div class="r3">
-        <div class="fg"><label>Pipeline <span class="req">*</span></label>
-          <select id="pipeline">
-            <option value="">— Select —</option>
-            <option value="57438197">Zentura BD Pipeline</option>
-            <option value="default">Zentura Sales Pipeline</option>
-          </select>
-        </div>
+      <input type="hidden" id="pipeline" value="57438197">
+      <div class="r2">
         <div class="fg"><label>Deal Type <span class="req">*</span></label>
           <select id="deal-type">
             <option value="">— Select —</option>
@@ -242,7 +237,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
         </div>
       </div>
       <div class="r3 mt8">
-        <div class="fg"><label>Amount (£) <span class="req">*</span></label>
+        <div class="fg"><label>Amount (£) <span class="req">*</span> <span style="font-weight:400;font-size:10px;text-transform:none;">— auto-fills from sq ft if unknown</span></label>
           <input id="amount" type="number" min="0" placeholder="Estimated deal value">
         </div>
         <div class="fg"><label>Target Appointment Date <span class="req">*</span></label>
@@ -445,6 +440,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
           <label class="pill"><input type="radio" name="call-outcome" value="Lead"><span>Lead</span></label>
           <label class="pill"><input type="radio" name="call-outcome" value="Hot Lead"><span>Hot Lead</span></label>
           <label class="pill"><input type="radio" name="call-outcome" value="Appointment"><span>Appointment</span></label>
+          <label class="pill"><input type="radio" name="call-outcome" value="Discovery Call"><span>Discovery Call</span></label>
         </div>
       </div>
       <div class="fg mt8">
@@ -496,6 +492,19 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
     <div id="error-detail" class="error-detail" style="display:none;"></div>
     <div class="modal-actions">
       <button class="btn btn-dark" onclick="closeModal('ov-error')">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Not Qualified Modal ── -->
+<div class="overlay" id="ov-nq">
+  <div class="modal">
+    <h2 style="color:var(--amber);">⚠ Not Qualified</h2>
+    <p id="nq-msg" style="font-size:13px;line-height:1.6;margin-bottom:10px;"></p>
+    <p style="font-size:13px;color:var(--mid);">You can still log the call notes and schedule a next action without creating a deal in HubSpot.</p>
+    <div class="modal-actions">
+      <button class="btn btn-mint" onclick="logCallOnly()">Log Call Only</button>
+      <button class="btn btn-dark" onclick="closeModal('ov-nq')">Cancel</button>
     </div>
   </div>
 </div>
@@ -601,66 +610,100 @@ function updateDealModeStatus(){
 }
 
 // ═══════════════════════════════════════════════
-// Scoring  (unchanged logic)
+// Scoring — Delta-matrix aligned
+// S max 2 · P max 4 · A max 7 · C max 3 · E max 4 = 20
 // ═══════════════════════════════════════════════
+const SECTION_MAX = {S:2, P:4, A:7, C:3, E:4};
+
 function calcS(){
   let s=0;
+  // Delta #9 Type of Client/Market (up to 1pt)
   const sqft=parseInt(v('s-sqft'))||0;
-  if(sqft>0) s+=2;
-  if(v('project-type')) s+=2;
-  return Math.min(4,s);
+  if(sqft>=10000) s+=1.0;
+  else if(sqft>=5000) s+=0.75;
+  else if(sqft>=2000) s+=0.5;
+  else if(sqft>=500)  s+=0.25;
+  else if(sqft>0)     s+=0.1;
+  // Delta #11 Type of Project (up to 1pt)
+  const pt=v('project-type');
+  if(pt==='Relocation')              s+=1.0;
+  else if(pt==='Expansion')          s+=0.9;
+  else if(pt==='Occupied Refurbishment') s+=0.7;
+  else if(pt==='Refurbishment')      s+=0.5;
+  else if(pt==='Industrial')         s+=0.4;
+  else if(pt==='Other')              s+=0.3;
+  return Math.min(2, Math.round(s*10)/10);
 }
 function calcP(){
   let s=0;
+  // Delta #4 Decision Making Process — trigger (up to 2pts)
   const tr=rv('p-trigger');
-  if(tr==='Lease expiry') s+=2;
-  else if(['Growing headcount','Consolidating','Refreshing / rebrand'].includes(tr)) s+=1.5;
-  else if(tr==='Exploring options') s+=0.5;
+  if(tr==='Lease expiry')                                             s+=2.0;
+  else if(tr==='Growing headcount'||tr==='Consolidating')             s+=1.5;
+  else if(tr==='Refreshing / rebrand')                                s+=1.0;
+  else if(tr==='Exploring options')                                   s+=0.5;
+  // None mentioned = 0
+  // Delta #5 Decision Dates — timeline (up to 2pts)
   const tl=rv('p-timeline');
-  if(tl==='urgent') s+=2;
+  if(tl==='urgent') s+=2.0;
   else if(tl==='near') s+=1.2;
   else if(tl==='long') s+=0.4;
-  return Math.min(4,Math.round(s*10)/10);
+  // unknown = 0
+  return Math.min(4, Math.round(s*10)/10);
 }
 function calcA(){
   let s=0;
+  // Delta #1 Levels of Contact + #13 Measurement of Confidence (up to 3.5pts)
   const lv=rv('a-level');
-  if(lv==='dm') s+=2.5;
-  else if(lv==='budget') s+=2;
-  else if(lv==='influencer') s+=1;
-  else if(lv==='gatekeeper') s+=0.25;
+  if(lv==='dm')          s+=3.5;
+  else if(lv==='budget') s+=2.8;
+  else if(lv==='influencer') s+=1.4;
+  else if(lv==='gatekeeper') s+=0.4;
+  // unknown = 0
+  // Delta #12 Attitude Towards Us + #3 Communication Patterns (up to 3.5pts)
   const op=rv('a-open');
-  if(op==='hot') s+=1.5;
-  else if(op==='warm') s+=0.75;
-  return Math.min(4,Math.round(s*10)/10);
+  if(op==='hot')  s+=3.5;
+  else if(op==='warm') s+=1.75;
+  else if(op==='cold') s+=0.5;
+  return Math.min(7, Math.round(s*10)/10);
 }
 function calcC(){
+  // Delta #7 Finance Process (up to 3pts)
   const b=rv('c-budget');
-  if(b==='specific') return 4;
-  if(b==='confirmed') return 3;
-  if(b==='vague') return 1.5;
+  if(b==='specific')  return 3.0;
+  if(b==='confirmed') return 2.0;
+  if(b==='vague')     return 1.0;
   return 0;
 }
 function calcE(){
   let s=0;
-  const done=rv('e-done');
-  if(done==='recent') s+=1.5;
-  else if(done==='prev') s+=1;
-  else if(done==='first') s+=0.5;
-  const ap=rv('e-appoint');
-  if(ap==='negotiated') s+=2;
-  else if(ap==='referral') s+=1.5;
-  else if(ap==='quotes') s+=1;
-  else if(ap==='tender') s+=0.4;
+  // Delta #2 Third Party Contacts (up to 2pts)
   const ot=rv('e-others');
-  if(ot==='none') s+=0.5;
-  else if(ot==='inhouse') s+=0.3;
-  return Math.min(4,Math.round(s*10)/10);
+  if(ot==='none')    s+=2.0;
+  else if(ot==='pm') s+=1.0;
+  else if(ot==='inhouse') s+=0.75;
+  else if(ot==='agent')   s+=0.5;
+  else if(ot==='unknown') s+=0.5;
+  // Delta #6 Procurement Route (up to 1pt)
+  const ap=rv('e-appoint');
+  if(ap==='negotiated') s+=1.0;
+  else if(ap==='referral') s+=0.75;
+  else if(ap==='quotes')   s+=0.5;
+  else if(ap==='tender')   s+=0.2;
+  else if(ap==='unknown')  s+=0.1;
+  // Delta #10 Previous Experience of Client (up to 1pt)
+  const done=rv('e-done');
+  if(done==='recent')  s+=0.75;
+  else if(done==='prev')  s+=0.5;
+  else if(done==='first') s+=0.25;
+  else if(done==='unknown') s+=0.1;
+  return Math.min(4, Math.round(s*10)/10);
 }
 function badge(total){
   if(total>=14) return ['Hot Lead','sb-hot'];
   if(total>=8)  return ['Lead','sb-lead'];
-  if(total>=1)  return ['Potential Lead','sb-pot'];
+  if(total>=4)  return ['Potential Lead','sb-pot'];
+  if(total>0)   return ['Not Qualified','sb-nq'];
   return ['—','sb-none'];
 }
 function score(){
@@ -670,8 +713,9 @@ function score(){
   const [label,cls]=badge(total);
   const b=document.getElementById('score-badge');
   b.textContent=label; b.className='score-badge '+cls;
+  // Dots scaled proportionally to each section's max (all sections show out of 4 dots)
   Object.entries(sc).forEach(([k,val])=>{
-    const disp=Math.round(val);
+    const disp=Math.round(val/SECTION_MAX[k]*4);
     ['dots-'+k,'dots-'+k+'-hdr'].forEach(id=>{
       document.querySelectorAll(`#${id} .dot`).forEach((d,i)=>{ d.className='dot'+(i<disp?' on':''); });
     });
@@ -742,7 +786,7 @@ function validate(){
   const problems=[];
   const createNew = !DEAL_ID && document.getElementById('create-new-deal').checked;
   const reqs=[
-    ['co','Company'],['owner','Owner'],['pipeline','Pipeline'],['deal-type','Deal Type'],
+    ['co','Company'],['owner','Owner'],['deal-type','Deal Type'],
     ['project-type','Project Type'],['amount','Amount'],['target-date','Target Appointment Date'],
     ['task-title','Task Title'],['ns-date','Next Activity Date']
   ];
@@ -762,6 +806,11 @@ async function submitToHubSpot(){
     return;
   }
   const {sc,total,label}=score();
+  if(total<4){
+    document.getElementById('nq-msg').textContent=`This opportunity scored ${Math.round(total)}/20 — below the 4/20 minimum required to create a deal. Gather more information before logging as a lead, or qualify out.`;
+    document.getElementById('ov-nq').classList.add('show');
+    return;
+  }
   const recId = dealRecordId();
   const createNew = recId ? false : document.getElementById('create-new-deal').checked;
 
@@ -828,6 +877,79 @@ async function submitToHubSpot(){
       `Task queued: ${payload.task_title} (due ${payload.next_step_date})`
     ]);
     setStatus('✓ Sent to HubSpot');
+  }catch(e){
+    closeProgress();
+    showError('Could not reach the HubSpot webhook.', 'Check your internet connection and try again. ('+e.message+')');
+  }
+}
+
+// ═══════════════════════════════════════════════
+// Log Call Only (not qualified — no deal created)
+// ═══════════════════════════════════════════════
+async function logCallOnly(){
+  closeModal('ov-nq');
+  // Minimal required fields only — no deal fields needed
+  const minProblems=[];
+  if(!v('co')){ markInvalid('co',true); minProblems.push('Company'); } else markInvalid('co',false);
+  if(!v('fn')&&!v('ln')){ markInvalid('fn',true); markInvalid('ln',true); minProblems.push('Contact name (first or last)'); } else { markInvalid('fn',false); markInvalid('ln',false); }
+  if(!v('owner')){ markInvalid('owner',true); minProblems.push('Owner'); } else markInvalid('owner',false);
+  if(!v('task-title')){ markInvalid('task-title',true); minProblems.push('Task Title'); } else markInvalid('task-title',false);
+  if(!v('ns-date')){ markInvalid('ns-date',true); minProblems.push('Next Activity Date'); } else markInvalid('ns-date',false);
+  if(minProblems.length){
+    showError('Please complete the minimum fields to log the call:', '<ul>'+minProblems.map(p=>`<li>${p}</li>`).join('')+'</ul>');
+    return;
+  }
+  const {sc,total,label}=score();
+  const payload={
+    source_tool: SOURCE_TOOL,
+    log_call_only: 'true',
+    create_new_deal: 'false',
+    deal_record_id: dealRecordId(),
+    // contact
+    firstname: v('fn'), lastname: v('ln'), company: v('co'),
+    job_title: v('jt'), phone: v('ph'), email: v('em'),
+    // owner
+    owner_id: v('owner'), owner_name: ownerName(),
+    dealname: v('dn')||v('co')+' — Office Fit-Out',
+    deal_source: v('deal-source'),
+    // scores
+    space_score: Math.round(total),
+    space_score_label: label,
+    space_score_scope: sc.S,
+    space_score_purpose: sc.P,
+    space_score_authority: sc.A,
+    space_score_cost: sc.C,
+    space_score_execution: sc.E,
+    // qualitative
+    quick_trigger: rv('p-trigger'),
+    quick_timeline: rv('p-timeline'),
+    quick_authority_level: rv('a-level'),
+    quick_openness: rv('a-open'),
+    quick_budget_sense: rv('c-budget'),
+    sqft: v('s-sqft'),
+    project_type: v('project-type'),
+    call_date: v('cd'),
+    // task
+    task_title: v('task-title'),
+    next_step: v('ns-custom')||v('task-title'),
+    next_step_date: v('ns-date'),
+    // notes
+    call_outcome: rv('call-outcome'),
+    notes: v('notes'),
+    space_data_json: JSON.stringify(snapshot())
+  };
+  openProgress('Logging call to HubSpot…');
+  try{
+    const r=await fetch(WEBHOOK_CREATE_UPDATE,{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    closeProgress();
+    if(!r.ok){ showError('The HubSpot webhook returned an error.', `HTTP ${r.status}. Try again — if it keeps failing, send Morgan the time and the contact name.`); return; }
+    showSuccess([
+      `Call logged — no deal created`,
+      `Score: ${payload.space_score}/20 — ${label}`,
+      `Owner: ${payload.owner_name||'—'}`,
+      `Task queued: ${payload.task_title} (due ${payload.next_step_date})`
+    ]);
+    setStatus('✓ Call logged to HubSpot (no deal)');
   }catch(e){
     closeProgress();
     showError('Could not reach the HubSpot webhook.', 'Check your internet connection and try again. ('+e.message+')');
