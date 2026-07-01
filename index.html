@@ -179,15 +179,11 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
     </div>
     <div class="card-body">
       <div class="r3">
-        <div class="fg"><label>First Name</label><input id="fn" placeholder="First name" oninput="autoDeal()"></div>
-        <div class="fg"><label>Last Name</label><input id="ln" placeholder="Last name" oninput="autoDeal()"></div>
+        <div class="fg"><label>First Name <span class="req">*</span></label><input id="fn" placeholder="First name" oninput="autoDeal()"></div>
+        <div class="fg"><label>Last Name <span class="req">*</span></label><input id="ln" placeholder="Last name" oninput="autoDeal()"></div>
         <div class="fg"><label>Company <span class="req">*</span></label><input id="co" placeholder="Company name" oninput="autoDeal()"></div>
       </div>
-      <div class="r3 mt8">
-        <div class="fg"><label>Their Role</label><input id="jt" placeholder="e.g. Office Manager"></div>
-        <div class="fg"><label>Phone</label><input id="ph" type="tel" placeholder="+44…"></div>
-        <div class="fg"><label>Email</label><input id="em" type="email" placeholder="Optional"></div>
-      </div>
+
       <div class="r3 mt8">
         <div class="fg"><label>Deal Name <span style="font-weight:400;font-size:10px;text-transform:none;">(auto)</span></label><input id="dn" placeholder="Company — Office Fit-Out"></div>
         <div class="fg"><label>Call Date</label><input id="cd" type="date"></div>
@@ -289,6 +285,12 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
         <label>Office Size (sq ft)</label>
         <input type="number" id="s-sqft" placeholder="e.g. 5000" min="0" oninput="score(); updateSuggestedValue()">
         <div class="value-hint" id="s-value-hint"></div>
+      </div>
+      <div class="fg mt8"><label>Is it a definite project?</label>
+        <div class="pills">
+          <label class="pill"><input type="radio" name="s-definite" value="yes" onchange="score()"><span>Yes</span></label>
+          <label class="pill"><input type="radio" name="s-definite" value="no" onchange="score()"><span>No</span></label>
+        </div>
       </div>
     </div>
   </div>
@@ -613,7 +615,7 @@ function updateDealModeStatus(){
 // Scoring — Delta-matrix aligned
 // S max 2 · P max 4 · A max 7 · C max 3 · E max 4 = 20
 // ═══════════════════════════════════════════════
-const SECTION_MAX = {S:2, P:4, A:7, C:3, E:4};
+const SECTION_MAX = {S:2, P:5, A:6, C:3, E:4};
 
 function calcS(){
   let s=0;
@@ -636,36 +638,36 @@ function calcS(){
 }
 function calcP(){
   let s=0;
-  // Delta #4 Decision Making Process — trigger (up to 2pts)
+  // Delta #4 Decision Making Process — trigger (up to 2.5pts)
   const tr=rv('p-trigger');
-  if(tr==='Lease expiry')                                             s+=2.0;
-  else if(tr==='Growing headcount'||tr==='Consolidating')             s+=1.5;
-  else if(tr==='Refreshing / rebrand')                                s+=1.0;
+  if(tr==='Lease expiry')                                             s+=2.5;
+  else if(tr==='Growing headcount'||tr==='Consolidating')             s+=2.0;
+  else if(tr==='Refreshing / rebrand')                                s+=1.25;
   else if(tr==='Exploring options')                                   s+=0.5;
   // None mentioned = 0
-  // Delta #5 Decision Dates — timeline (up to 2pts)
+  // Delta #5 Decision Dates — timeline (up to 2.5pts)
   const tl=rv('p-timeline');
-  if(tl==='urgent') s+=2.0;
-  else if(tl==='near') s+=1.2;
-  else if(tl==='long') s+=0.4;
+  if(tl==='urgent') s+=2.5;
+  else if(tl==='near') s+=1.5;
+  else if(tl==='long') s+=0.5;
   // unknown = 0
-  return Math.min(4, Math.round(s*10)/10);
+  return Math.min(5, Math.round(s*10)/10);
 }
 function calcA(){
   let s=0;
-  // Delta #1 Levels of Contact + #13 Measurement of Confidence (up to 3.5pts)
+  // Delta #1 Levels of Contact + #13 Measurement of Confidence (up to 3.0pts)
   const lv=rv('a-level');
-  if(lv==='dm')          s+=3.5;
-  else if(lv==='budget') s+=2.8;
-  else if(lv==='influencer') s+=1.4;
-  else if(lv==='gatekeeper') s+=0.4;
+  if(lv==='dm')          s+=3.0;
+  else if(lv==='budget') s+=2.4;
+  else if(lv==='influencer') s+=1.2;
+  else if(lv==='gatekeeper') s+=0.35;
   // unknown = 0
-  // Delta #12 Attitude Towards Us + #3 Communication Patterns (up to 3.5pts)
+  // Delta #12 Attitude Towards Us + #3 Communication Patterns (up to 3.0pts)
   const op=rv('a-open');
-  if(op==='hot')  s+=3.5;
-  else if(op==='warm') s+=1.75;
+  if(op==='hot')  s+=3.0;
+  else if(op==='warm') s+=1.5;
   else if(op==='cold') s+=0.5;
-  return Math.min(7, Math.round(s*10)/10);
+  return Math.min(6, Math.round(s*10)/10);
 }
 function calcC(){
   // Delta #7 Finance Process (up to 3pts)
@@ -702,13 +704,16 @@ function calcE(){
 function badge(total){
   if(total>=14) return ['Hot Lead','sb-hot'];
   if(total>=8)  return ['Lead','sb-lead'];
-  if(total>=4)  return ['Potential Lead','sb-pot'];
-  if(total>0)   return ['Not Qualified','sb-nq'];
+  if(total>=4)  return ['Potential Lead','sb-pot'];  // max 7
+  if(total>0)   return ['Not Qualified','sb-nq'];    // 1–3
   return ['—','sb-none'];
 }
 function score(){
   const sc={S:calcS(),P:calcP(),A:calcA(),C:calcC(),E:calcE()};
-  const total=Math.round((sc.S+sc.P+sc.A+sc.C+sc.E)*10)/10;
+  let raw=Math.round((sc.S+sc.P+sc.A+sc.C+sc.E)*10)/10;
+  // Definite project cap — No answer limits badge to Potential Lead
+  const def=rv('s-definite');
+  const total = (def==='no') ? Math.min(raw, 7) : raw;
   document.getElementById('score-total').innerHTML=Math.round(total)+'<span>/20</span>';
   const [label,cls]=badge(total);
   const b=document.getElementById('score-badge');
@@ -745,7 +750,7 @@ function doReset(){
 // Round-trip: snapshot + restore (space_data_json)
 // ═══════════════════════════════════════════════
 const TEXT_IDS=['fn','ln','co','jt','ph','em','dn','cd','owner','pipeline','deal-type','project-type','amount','target-date','deal-source','s-sqft','task-title','ns-date','ns-custom','notes'];
-const RADIO_NAMES=['p-trigger','p-timeline','a-level','a-open','c-budget','e-done','e-appoint','e-others','call-outcome'];
+const RADIO_NAMES=['p-trigger','p-timeline','a-level','a-open','c-budget','e-done','e-appoint','e-others','call-outcome','s-definite'];
 
 function snapshot(){
   const d={};
@@ -791,8 +796,8 @@ function validate(){
     ['task-title','Task Title'],['ns-date','Next Activity Date']
   ];
   reqs.forEach(([id,lbl])=>{ const bad=!v(id); markInvalid(id,bad); if(bad) problems.push(lbl); });
-  if(!v('fn') && !v('ln')){ markInvalid('fn',true); markInvalid('ln',true); problems.push('Contact name (first or last)'); }
-  else { markInvalid('fn',false); markInvalid('ln',false); }
+  if(!v('fn')){ markInvalid('fn',true); problems.push('First Name'); } else markInvalid('fn',false);
+  if(!v('ln')){ markInvalid('ln',true); problems.push('Last Name'); } else markInvalid('ln',false);
   return problems;
 }
 
@@ -852,6 +857,7 @@ async function submitToHubSpot(){
     quick_appointment_route: rv('e-appoint'),
     quick_others_involved: rv('e-others'),
     quick_headcount_band: '',
+    quick_definite_project: rv('s-definite'),
     sqft: v('s-sqft'),
     call_date: v('cd'),
     // task (obligatory, hard-coded type=to-do, priority=high in Make)
@@ -891,7 +897,8 @@ async function logCallOnly(){
   // Minimal required fields only — no deal fields needed
   const minProblems=[];
   if(!v('co')){ markInvalid('co',true); minProblems.push('Company'); } else markInvalid('co',false);
-  if(!v('fn')&&!v('ln')){ markInvalid('fn',true); markInvalid('ln',true); minProblems.push('Contact name (first or last)'); } else { markInvalid('fn',false); markInvalid('ln',false); }
+  if(!v('fn')){ markInvalid('fn',true); minProblems.push('First Name'); } else markInvalid('fn',false);
+  if(!v('ln')){ markInvalid('ln',true); minProblems.push('Last Name'); } else markInvalid('ln',false);
   if(!v('owner')){ markInvalid('owner',true); minProblems.push('Owner'); } else markInvalid('owner',false);
   if(!v('task-title')){ markInvalid('task-title',true); minProblems.push('Task Title'); } else markInvalid('task-title',false);
   if(!v('ns-date')){ markInvalid('ns-date',true); minProblems.push('Next Activity Date'); } else markInvalid('ns-date',false);
