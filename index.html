@@ -37,11 +37,16 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
 }
 .caller-chip:hover { border-color: var(--mint); }
 .caller-chip.unset { border-color: var(--amber); background: #3a2f1c; }
+.caller-chip.locked { cursor: default; border-color: #4a4746; padding-right: 12px; }
+.caller-chip.locked:hover { border-color: #4a4746; }
 .caller-label { font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: #8d8988; }
 .caller-chip.unset .caller-label { color: var(--amber); }
 .caller-name { font-size: 13px; font-weight: 700; color: #fff; }
 .caller-chip.unset .caller-name { color: var(--amber); }
 .caller-edit { font-size: 10px; font-weight: 600; color: var(--dark); background: var(--mint); border-radius: 12px; padding: 3px 8px; }
+.caller-lock { font-size: 11px; color: var(--mint); display: none; }
+.caller-chip.locked .caller-lock { display: inline; }
+.caller-chip.locked .caller-edit { display: none; }
 
 /* ── Score Bar ── */
 .score-bar { background: var(--dark); border-top: 1px solid #fff1; padding: 10px 24px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
@@ -165,9 +170,10 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
     <div class="hdr-sub">Zentura Workspace · Cold Call &amp; BD Capture</div>
   </div>
   <div class="hdr-right">
-    <div class="caller-chip unset" id="caller-chip" onclick="openCaller()" title="Who is making these calls — set once per session">
+    <div class="caller-chip unset" id="caller-chip" onclick="onCallerChipClick()" title="Who made this call">
       <span class="caller-label">Logged by</span>
       <span class="caller-name" id="caller-name">not set</span>
+      <span class="caller-lock" id="caller-lock" title="Taken from your sign-in — cannot be changed">🔒</span>
       <span class="caller-edit" id="caller-edit">set</span>
     </div>
     <button class="btn btn-outline btn-sm" onclick="openReset()">↺ Reset</button>
@@ -235,6 +241,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
             <option value="616257507">Morgan Bush</option>
           </select>
           <div class="field-note" id="assignee-note" style="display:none;">Set from the record — <a onclick="unlockAssignee()">change</a></div>
+          <div class="field-note" id="assign-me-note" style="display:none;"><a onclick="assignToMe()">Assign to me</a> — you own this company</div>
         </div>
       </div>
     </div>
@@ -507,8 +514,8 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
 <!-- ── Logged-by Modal ── -->
 <div class="overlay" id="ov-caller">
   <div class="modal">
-    <h2>Who is logging these calls?</h2>
-    <p class="lede">Set this once. It stays on every call you log in this session and is not cleared by Reset. It records who made the call — it does not decide who the lead goes to.</p>
+    <h2>Who is making these calls?</h2>
+    <p class="lede">We couldn't identify you automatically, so confirm your name. It stays on every call you log in this session, is not cleared by Reset, and becomes the owner of each call note. It does not decide who the lead goes to.</p>
     <div class="fg">
       <label>Logged by <span class="req">*</span></label>
       <select id="caller-select">
@@ -590,18 +597,68 @@ const WEBHOOK_GET_DATA       = 'https://hook.eu1.make.com/wo2eqpy56cz1pox9xkd7aw
 const SOURCE_TOOL            = 'SPACE Quick Qualifier';
 
 // ═══════════════════════════════════════════════
-// CONFIG — Volume callers ("Logged by" roster)
+// CONFIG — Caller identity ("Logged by")
 // ═══════════════════════════════════════════════
-// ⚠ ADD YOUR DIALLERS HERE. `code` is what goes in the URL (?caller=code),
-//   `name` is what appears on the chip and in the call note.
-//   Keep this list SEPARATE from the "Assign lead to" list in the HTML above —
-//   non-overlapping lists are what stop the two fields being confused.
-//   If you leave this array empty, the picker falls back to the assignee roster
-//   so the tool still works, but you lose that protection.
-const CALLERS = [
-  // { code: 'jdoe',  name: 'Jane Doe' },
-  // { code: 'asmith', name: 'Alan Smith' },
+// The signed-in person is ALWAYS the owner of the call note. Identity is
+// resolved once, on load, and cannot be edited in the form.
+//
+// Resolution order — first hit wins:
+//   1. HOST   — an identity injected by whatever the tool is embedded in.
+//               Wire it up in resolveHostIdentity() below. This is the only
+//               source that is actually evidence of who made the call.
+//   2. URL    — ?caller=<code> from a per-person bookmark. Trusted but weak:
+//               a bookmark can be shared.
+//   3. MANUAL — the person picks their own name. Self-declared, therefore not
+//               evidence. Only used when 1 and 2 are both absent, and the
+//               submission is flagged so you can see it in reporting.
+//
+// ⚠ ADD YOUR CALLERS HERE. `code` is what appears in the URL or is matched
+//   against the host identity; `name` is what appears on the chip and on the
+//   call note. Keep this list SEPARATE from the "Assign lead to" list in the
+//   HTML above — non-overlapping lists stop the two fields being confused.
+const CALLER_DIRECTORY = [
+  // { code: 'jdoe',   name: 'Jane Doe',   email: 'jane@zentura.co.uk' },
+  // { code: 'asmith', name: 'Alan Smith', email: 'alan@zentura.co.uk' },
 ];
+
+// ⚠ WIRE THIS UP. Return { code, name } for the signed-in person, or null.
+//   Whatever the host passes in — a query param, a hidden field written by your
+//   page template, a value on window — read it here. Examples, uncomment one:
+function resolveHostIdentity(){
+  // Uncomment ONE of the three below, whichever matches how people sign in.
+
+  // ── (a) Server-rendered injection (simplest, most reliable) ──
+  // Your page template writes the signed-in user into the page before this
+  // script runs, in its own script tag:
+  //     window.ZENTURA_USER = { id: 'jdoe', name: 'Jane Doe' };
+  // if(window.ZENTURA_USER && window.ZENTURA_USER.name){
+  //   return { code: window.ZENTURA_USER.id || '', name: window.ZENTURA_USER.name };
+  // }
+
+  // ── (b) Microsoft Entra ID / Azure AD via MSAL.js ──
+  // For a static page with no server. Requires an app registration and the
+  // MSAL script loaded above. Sign-in must complete before this runs.
+  // if(window.msalInstance){
+  //   const acct = window.msalInstance.getAllAccounts()[0];
+  //   if(acct){
+  //     const hit = CALLER_DIRECTORY.find(c => c.email === acct.username);
+  //     return { code: hit ? hit.code : acct.username,
+  //              name: hit ? hit.name  : (acct.name || acct.username) };
+  //   }
+  // }
+
+  // ── (c) Identity-aware proxy (Cloudflare Access, Entra App Proxy, etc.) ──
+  // The proxy has already authenticated the person upstream; read the identity
+  // it exposes. Header-based proxies need a tiny /me endpoint to read from.
+  // const cookie = document.cookie.match(/(?:^|; )zentura_user=([^;]+)/);
+  // if(cookie){
+  //   const email = decodeURIComponent(cookie[1]);
+  //   const hit = CALLER_DIRECTORY.find(c => c.email === email);
+  //   return { code: hit ? hit.code : email, name: hit ? hit.name : email };
+  // }
+
+  return null;
+}
 
 // ═══════════════════════════════════════════════
 // CONFIG — Appointment stage override
@@ -620,8 +677,10 @@ const CALLER_P = PARAMS.get('caller')   || '';   // per-caller bookmark
 const ASSIGN_P = PARAMS.get('assignee') || '';   // pre-derived lead recipient (owner id)
 
 // Session identity — held in memory only, survives Reset, cleared on reload.
-let CALLER = { code:'', name:'' };
+// source: 'host' | 'url' | 'manual' | ''
+let CALLER = { code:'', name:'', source:'' };
 let ASSIGNEE_LOCKED = false;
+function identityIsLocked(){ return CALLER.source==='host' || CALLER.source==='url'; }
 
 // ═══════════════════════════════════════════════
 // Helpers
@@ -656,14 +715,13 @@ function showSuccess(items){ document.getElementById('success-list').innerHTML=i
 function buildCallerOptions(){
   const sel=document.getElementById('caller-select');
   sel.innerHTML='<option value="">— Select —</option>';
-  if(CALLERS.length){
-    CALLERS.forEach(c=>{
+  if(CALLER_DIRECTORY.length){
+    CALLER_DIRECTORY.forEach(c=>{
       const o=document.createElement('option');
       o.value=c.code; o.textContent=c.name; sel.appendChild(o);
     });
   } else {
-    // Fallback: reuse the assignee roster so the tool is usable before the
-    // CALLERS list is filled in. Codes are the owner ids in that case.
+    // Fallback so the tool is usable before CALLER_DIRECTORY is filled in.
     Array.from(document.getElementById('owner').options).forEach(o=>{
       if(!o.value) return;
       const n=document.createElement('option');
@@ -672,13 +730,31 @@ function buildCallerOptions(){
   }
 }
 function callerNameFor(code){
-  const hit=CALLERS.find(c=>c.code===code);
+  const hit=CALLER_DIRECTORY.find(c=>c.code===code);
   if(hit) return hit.name;
   const sel=document.getElementById('caller-select');
   const opt=Array.from(sel.options).find(o=>o.value===code);
   return opt ? opt.text : '';
 }
+
+// Resolve once, on load. Host beats URL beats manual.
+function resolveIdentity(){
+  const host = resolveHostIdentity();
+  if(host && host.name){ CALLER={ code:host.code||'', name:host.name, source:'host' }; return; }
+  if(CALLER_P){
+    const nm = callerNameFor(CALLER_P);
+    if(nm){ CALLER={ code:CALLER_P, name:nm, source:'url' }; return; }
+  }
+  CALLER={ code:'', name:'', source:'' };
+}
+
+// The chip is only interactive when identity is self-declared.
+function onCallerChipClick(){
+  if(identityIsLocked()) return;
+  openCaller();
+}
 function openCaller(){
+  if(identityIsLocked()) return;
   document.getElementById('caller-select').value = CALLER.code || '';
   document.getElementById('ov-caller').classList.add('show');
 }
@@ -686,7 +762,7 @@ function confirmCaller(){
   const code=document.getElementById('caller-select').value;
   if(!code){ document.getElementById('caller-select').classList.add('invalid'); return; }
   document.getElementById('caller-select').classList.remove('invalid');
-  CALLER={ code, name: callerNameFor(code) };
+  CALLER={ code, name: callerNameFor(code), source:'manual' };
   closeModal('ov-caller');
   renderCaller();
 }
@@ -694,14 +770,19 @@ function renderCaller(){
   const chip=document.getElementById('caller-chip');
   const nameEl=document.getElementById('caller-name');
   const editEl=document.getElementById('caller-edit');
+  chip.classList.toggle('locked', identityIsLocked());
   if(CALLER.name){
     chip.classList.remove('unset');
     nameEl.textContent=CALLER.name;
     editEl.textContent='change';
+    chip.title = identityIsLocked()
+      ? 'Taken from your sign-in — this call note is recorded against you and cannot be reassigned here.'
+      : 'Self-declared — click to change.';
   } else {
     chip.classList.add('unset');
     nameEl.textContent='not set';
     editEl.textContent='set';
+    chip.title='Set who made this call';
   }
   updateAttribution();
 }
@@ -722,6 +803,30 @@ function unlockAssignee(){
   ASSIGNEE_LOCKED=false;
   document.getElementById('assignee-note').style.display='none';
   document.getElementById('owner').focus();
+  renderAssignMe();
+}
+
+// ── "Assign to me" — only when the signed-in person is themselves a possible
+//    lead recipient. Deliberately NOT a default: pre-selecting the caller is
+//    how leads end up owned by whoever happened to dial.
+function callerAssigneeOption(){
+  if(!CALLER.name) return null;
+  const norm = t => String(t).trim().toLowerCase();
+  return Array.from(document.getElementById('owner').options).find(o =>
+    o.value && (o.value===CALLER.code || norm(o.text)===norm(CALLER.name))
+  ) || null;
+}
+function renderAssignMe(){
+  const note=document.getElementById('assign-me-note');
+  const opt=callerAssigneeOption();
+  const show = !!opt && !ASSIGNEE_LOCKED && document.getElementById('owner').value!==opt.value;
+  note.style.display = show ? 'block' : 'none';
+}
+function assignToMe(){
+  const opt=callerAssigneeOption();
+  if(!opt) return;
+  document.getElementById('owner').value=opt.value;
+  updateAttribution();
 }
 
 // ═══════════════════════════════════════════════
@@ -738,12 +843,14 @@ function updateAttribution(){
     line.className='attrib warn';
     line.innerHTML=`Logging as <b>${esc(CALLER.name)}</b> <span class="arrow">→</span> no lead recipient chosen yet. Pick <b>Assign lead to</b>.`;
   } else {
+    const flag = identityIsLocked() ? '' : ' <span class="arrow">·</span> self-declared';
     line.className='attrib';
-    line.innerHTML=`Logging as <b>${esc(CALLER.name)}</b> <span class="arrow">→</span> lead assigned to <b>${esc(to)}</b> <span class="arrow">·</span> follow-up task sits with <b>${esc(to)}</b>`;
+    line.innerHTML=`Call note owner <b>${esc(CALLER.name)}</b> <span class="arrow">→</span> lead assigned to <b>${esc(to)}</b> <span class="arrow">·</span> follow-up task sits with <b>${esc(to)}</b>${flag}`;
   }
   taskNote.textContent = to
     ? `This task goes to ${to}, not to you.`
     : 'This task goes to the person the lead is assigned to, not to you.';
+  renderAssignMe();
 }
 
 // ═══════════════════════════════════════════════
@@ -926,7 +1033,9 @@ function score(){
 // ═══════════════════════════════════════════════
 function doReset(){
   document.querySelectorAll('input[type=radio]').forEach(r=>r.checked=false);
-  document.querySelectorAll('input[type=text],input[type=email],input[type=tel],input[type=date],input[type=number],textarea').forEach(el=>{ el.value=''; });
+  // NB: attribute selectors like input[type=text] do NOT match inputs that omit
+  // the type attribute (fn, ln, co, dn) — they were surviving Reset.
+  document.querySelectorAll('input:not([type=radio]):not([type=checkbox]):not([type=hidden]),textarea').forEach(el=>{ el.value=''; });
   // Clear form selects only — the caller picker is driven by the CALLER variable.
   ['owner','deal-type','project-type','deal-source'].forEach(id=>{ document.getElementById(id).value=''; });
   document.getElementById('ns-custom').value='';
@@ -955,6 +1064,7 @@ function snapshot(){
   // Recorded for audit only. restore() deliberately ignores these — see below.
   d.logged_by_name = CALLER.name;
   d.logged_by_code = CALLER.code;
+  d.logged_by_source = CALLER.source;
   return d;
 }
 function restore(d){
@@ -1031,6 +1141,10 @@ async function submitToHubSpot(){
     // ── who made the call (attribution for the call note) ──
     logged_by_name: CALLER.name,
     logged_by_code: CALLER.code,
+    logged_by_source: CALLER.source,          // host | url | manual
+    logged_by_verified: String(CALLER.source==='host'),
+    call_note_owner_name: CALLER.name,        // explicit: note owner ≠ lead owner
+    call_note_owner_code: CALLER.code,
     // ── who the lead + task belong to (unchanged keys) ──
     owner_id: v('owner'), owner_name: ownerName(),
     assignee_locked: String(ASSIGNEE_LOCKED),
@@ -1086,7 +1200,7 @@ async function submitToHubSpot(){
     closeProgress();
     if(!r.ok){ showError('The HubSpot webhook returned an error.', `HTTP ${r.status}. Try again — if it keeps failing, send Morgan the time and the deal name.`); return; }
     const items=[
-      `Logged by: ${esc(CALLER.name)}`,
+      `Call note owner: ${esc(CALLER.name)}`,
       `Lead assigned to: ${esc(payload.owner_name||'—')}`,
       createNew ? `Deal will be created: ${esc(payload.dealname)}` : `Deal ${recId?('#'+recId):''} will be updated`,
       `Score sent: ${payload.space_score}/20 — ${label}`,
@@ -1127,6 +1241,10 @@ async function logCallOnly(){
     firstname: v('fn'), lastname: v('ln'), company: v('co'),
     logged_by_name: CALLER.name,
     logged_by_code: CALLER.code,
+    logged_by_source: CALLER.source,          // host | url | manual
+    logged_by_verified: String(CALLER.source==='host'),
+    call_note_owner_name: CALLER.name,        // explicit: note owner ≠ lead owner
+    call_note_owner_code: CALLER.code,
     owner_id: v('owner'), owner_name: ownerName(),
     assignee_locked: String(ASSIGNEE_LOCKED),
     dealname: v('dn')||v('co')+' — Office Fit-Out',
@@ -1164,7 +1282,7 @@ async function logCallOnly(){
     if(!r.ok){ showError('The HubSpot webhook returned an error.', `HTTP ${r.status}. Try again — if it keeps failing, send Morgan the time and the contact name.`); return; }
     showSuccess([
       `Call logged — no deal created`,
-      `Logged by: ${esc(CALLER.name)}`,
+      `Call note owner: ${esc(CALLER.name)}`,
       `Lead recipient on file: ${esc(payload.owner_name||'—')}`,
       `Score: ${payload.space_score}/20 — ${label}`,
       `Task queued for ${esc(payload.owner_name||'—')}: ${esc(payload.task_title)} (due ${payload.next_step_date})`
@@ -1182,15 +1300,12 @@ async function logCallOnly(){
 buildCallerOptions();
 if(DEAL_ID) document.getElementById('deal-record-id').value = DEAL_ID;
 document.getElementById('create-new-deal').checked = !DEAL_ID;
-if(CALLER_P){
-  const nm = callerNameFor(CALLER_P);
-  if(nm) CALLER = { code: CALLER_P, name: nm };
-}
+resolveIdentity();
 if(ASSIGN_P) lockAssignee(ASSIGN_P);
 renderCaller();
 updateDealModeStatus();
 score();
-// No caller in the URL and none set — ask once, up front.
+// Nothing identified us — fall back to asking, once, up front.
 if(!CALLER.name) openCaller();
 prefillFromHubSpot();
 </script>
