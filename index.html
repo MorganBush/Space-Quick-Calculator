@@ -225,6 +225,35 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
         <div class="fg"><label>Company <span class="req">*</span></label><input id="co" placeholder="Company name" oninput="autoDeal()"></div>
       </div>
 
+      <div class="r2 mt8">
+        <div class="fg"><label>Contact record link <span class="sub">— paste the HubSpot contact URL: exact, no guessing</span></label>
+          <input id="contact-ref" placeholder="Paste HubSpot contact URL, or 1578251" oninput="onRefInput('contact',false)" onchange="onRefInput('contact',true)">
+          <div class="field-note" id="contact-ref-status"></div>
+          <input type="hidden" id="contact-record-id">
+        </div>
+        <div class="fg"><label>Email <span class="sub">— use this when there is no record yet</span></label>
+          <input id="em" type="email" placeholder="name@company.com" oninput="onEmailInput()">
+        </div>
+      </div>
+
+      <div class="field-note mt8" id="company-source-note"></div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600;color:var(--mid);cursor:pointer;margin-top:6px;">
+        <input id="company-override" type="checkbox" style="width:auto;" onchange="renderCompanyBlock()">
+        Company differs from the contact's record
+      </label>
+      <div id="company-block" style="display:none;">
+        <div class="r2 mt8">
+          <div class="fg"><label>Company record link <span class="sub">— paste the HubSpot company URL or ID</span></label>
+            <input id="company-ref" placeholder="Paste HubSpot company URL, or ID" oninput="onRefInput('company',false)" onchange="onRefInput('company',true)">
+            <div class="field-note" id="company-ref-status"></div>
+            <input type="hidden" id="company-record-id">
+          </div>
+          <div class="fg"><label>Company domain</label>
+            <input id="dom" placeholder="company.com" oninput="markManual('dom'); updateMatchLine()">
+          </div>
+        </div>
+      </div>
+
       <div class="r3 mt8">
         <div class="fg"><label>Deal Name <span class="sub">(auto)</span></label><input id="dn" placeholder="Company — Office Fit-Out"></div>
         <div class="fg"><label>Call Date</label><input id="cd" type="date"></div>
@@ -302,7 +331,8 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
       </div>
       <div class="r2 mt8">
         <div class="fg"><label>Deal Record ID <span class="sub">(auto from HubSpot)</span></label>
-          <input id="deal-record-id" placeholder="Fills automatically when opened from a deal" oninput="updateDealModeStatus()">
+          <input id="deal-record-id" placeholder="Fills automatically when opened from a deal" oninput="onRefInput('deal',false)" onchange="onRefInput('deal',true)">
+          <div class="field-note" id="deal-ref-status"></div>
         </div>
         <div class="fg">
           <label>Create New Deal?</label>
@@ -501,6 +531,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
   <div class="card">
     <div class="card-body">
       <div class="attrib warn" id="attrib-line">Set <b>Logged by</b> at the top right before saving.</div>
+      <div class="attrib warn" id="match-line">Matching on name only.</div>
       <div class="actions">
         <button class="btn btn-mint" onclick="submitToHubSpot()">Save to HubSpot</button>
         <div class="actions-sep"></div>
@@ -661,6 +692,15 @@ function resolveHostIdentity(){
 }
 
 // ═══════════════════════════════════════════════
+// CONFIG — HubSpot record references
+// ═══════════════════════════════════════════════
+// Links from any other portal are rejected rather than silently used.
+const HUBSPOT_PORTAL_ID = '26180826';
+const OBJ = { contact:'0-1', company:'0-2', deal:'0-3' };
+const OBJ_NAME = { '0-1':'contact', '0-2':'company', '0-3':'deal', '0-5':'ticket' };
+const FREE_MAIL = ['gmail.com','googlemail.com','hotmail.com','hotmail.co.uk','outlook.com','live.com','live.co.uk','yahoo.com','yahoo.co.uk','icloud.com','me.com','aol.com','btinternet.com','sky.com'];
+
+// ═══════════════════════════════════════════════
 // CONFIG — Appointment stage override
 // ═══════════════════════════════════════════════
 // ⚠ Replace with the real internal stage ID from HubSpot.
@@ -675,6 +715,8 @@ const PARAMS   = new URLSearchParams(location.search);
 let DEAL_ID    = PARAMS.get('dealId')   || '';   // existing round-trip
 const CALLER_P = PARAMS.get('caller')   || '';   // per-caller bookmark
 const ASSIGN_P = PARAMS.get('assignee') || '';   // pre-derived lead recipient (owner id)
+const CONTACT_P = PARAMS.get('contactId') || '';  // launched from a contact record
+const COMPANY_P = PARAMS.get('companyId') || '';  // launched from a company record
 
 // Session identity — held in memory only, survives Reset, cleared on reload.
 // source: 'host' | 'url' | 'manual' | ''
@@ -891,9 +933,143 @@ function updateSuggestedValue(){
 document.getElementById('amount').addEventListener('input',()=>{ document.getElementById('amount').dataset.manual='1'; });
 
 // ═══════════════════════════════════════════════
+// HubSpot record references — parse, validate, report
+// ═══════════════════════════════════════════════
+// Accepts either a bare numeric record ID or a full HubSpot record URL, in
+// modern form  .../{portalId}/record/{objectType}/{recordId}
+// or legacy form .../{portalId}/contact|company|deal/{recordId}.
+// Rejects: another portal, the wrong object type, anything unparseable.
+function parseHubSpotRef(raw, expectedType){
+  const t = String(raw||'').trim();
+  if(!t) return { state:'empty' };
+  if(/^#?\d+$/.test(t)) return { state:'ok', id:t.replace('#',''), source:'id', verified:false };
+  let u;
+  try { u = new URL(t); } catch(_) { return { state:'error', msg:'Not a record ID or a HubSpot link.' }; }
+  if(!/(^|\.)hubspot\.com$/i.test(u.hostname)) return { state:'error', msg:'That is not a HubSpot link.' };
+  const parts = u.pathname.split('/').filter(Boolean);
+  const portal = parts[1] || '';
+  let objType='', id='';
+  const ri = parts.indexOf('record');
+  if(ri>-1 && parts[ri+1] && parts[ri+2]){ objType=parts[ri+1]; id=parts[ri+2]; }
+  else if(parts[2] && parts[3] && OBJ[parts[2]]){ objType=OBJ[parts[2]]; id=parts[3]; }
+  if(!/^\d+$/.test(id)) return { state:'error', msg:'No record ID found in that link.' };
+  if(portal && portal!==HUBSPOT_PORTAL_ID){
+    return { state:'error', msg:`Link is from portal ${portal}, not ${HUBSPOT_PORTAL_ID} — wrong account, not used.` };
+  }
+  if(expectedType && objType && objType!==expectedType){
+    const got = OBJ_NAME[objType] || objType;
+    const want = OBJ_NAME[expectedType] || expectedType;
+    return { state:'error', msg:`That is a ${got} link, not a ${want}. Paste it in the ${got} field.` };
+  }
+  return { state:'ok', id, portal, objType, source:'link', verified:true };
+}
+
+const REF_FIELDS = {
+  contact: { input:'contact-ref',    status:'contact-ref-status', hidden:'contact-record-id', type:OBJ.contact },
+  company: { input:'company-ref',    status:'company-ref-status', hidden:'company-record-id', type:OBJ.company },
+  deal:    { input:'deal-record-id', status:'deal-ref-status',    hidden:null,                type:OBJ.deal    }
+};
+const REF_STATE = { contact:{state:'empty'}, company:{state:'empty'}, deal:{state:'empty'} };
+
+function onRefInput(kind, normalise){
+  const f = REF_FIELDS[kind];
+  const inp = document.getElementById(f.input);
+  const res = parseHubSpotRef(inp.value, f.type);
+  REF_STATE[kind] = res;
+  const st = document.getElementById(f.status);
+  inp.classList.toggle('invalid', res.state==='error');
+  if(res.state==='empty'){ st.textContent=''; st.style.color=''; }
+  else if(res.state==='error'){ st.textContent='⚠ '+res.msg; st.style.color='var(--red)'; }
+  else {
+    st.textContent = res.verified
+      ? `✓ ${OBJ_NAME[f.type]} #${res.id} — verified from link`
+      : `✓ ${OBJ_NAME[f.type]} #${res.id} — ID entered directly, object type not verified`;
+    st.style.color = res.verified ? 'var(--green)' : 'var(--mid)';
+    if(normalise && res.source==='link') inp.value = res.id;   // collapse URL to the ID on blur
+  }
+  if(f.hidden) document.getElementById(f.hidden).value = (res.state==='ok') ? res.id : '';
+  if(kind==='deal') updateDealModeStatus();
+  if(kind==='contact') renderCompanyBlock();
+  updateMatchLine();
+}
+function refId(kind){ const r=REF_STATE[kind]; return r && r.state==='ok' ? r.id : ''; }
+function refErrors(){
+  return Object.entries(REF_FIELDS)
+    .filter(([k])=>REF_STATE[k].state==='error')
+    .map(([k])=>`${OBJ_NAME[REF_FIELDS[k].type]} record link`);
+}
+
+// ── Email → domain, and the match-quality line ──
+function markManual(id){ document.getElementById(id).dataset.manual='1'; }
+function onEmailInput(){
+  const em=v('em');
+  const dom=document.getElementById('dom');
+  const at=em.indexOf('@');
+  if(at>0 && !dom.dataset.manual){
+    const d=em.slice(at+1).toLowerCase();
+    dom.value = FREE_MAIL.includes(d) ? '' : d;   // personal addresses tell us nothing about the company
+  }
+  updateMatchLine();
+}
+function companyOverride(){ return document.getElementById('company-override').checked; }
+
+function matchBasis(){
+  const contact = refId('contact') ? 'contact_id' : (v('em') ? 'email' : 'name');
+  let company;
+  if(companyOverride()){
+    company = refId('company') ? 'company_id' : (v('dom') ? 'domain' : 'name');
+  } else if(refId('contact')){
+    company = 'contact_association';        // read the contact's associated company
+  } else {
+    company = v('dom') ? 'domain' : 'name';
+  }
+  return { contact, company };
+}
+
+// The company fields only appear when they can actually do something:
+// either the rep has said the company differs, or there is no contact record
+// to inherit the association from.
+function renderCompanyBlock(){
+  const override = companyOverride();
+  const haveContact = !!refId('contact');
+  const show = override || !haveContact;
+  document.getElementById('company-block').style.display = show ? 'block' : 'none';
+  const note = document.getElementById('company-source-note');
+  if(!override && haveContact){
+    note.textContent = "Company will be taken from the contact's associated company record in HubSpot.";
+    note.style.color = 'var(--green)';
+  } else if(override){
+    note.textContent = 'Overriding — give a company link or domain below, or it falls back to matching on the company name.';
+    note.style.color = 'var(--mid)';
+  } else {
+    note.textContent = 'No contact record linked, so the company is matched from the domain or, failing that, the name.';
+    note.style.color = 'var(--mid)';
+  }
+  if(!show){                                 // clear ignored inputs so nothing stale is sent
+    const cr=document.getElementById('company-ref');
+    if(cr.value){ cr.value=''; onRefInput('company',false); }
+    document.getElementById('dom').value='';
+  }
+  updateMatchLine();
+}
+function updateMatchLine(){
+  const line=document.getElementById('match-line');
+  if(!line) return;
+  const b=matchBasis();
+  const label={ contact_id:'record ID', company_id:'record ID', email:'email', domain:'domain',
+                contact_association:"the contact's linked company", name:'name only' };
+  const weak = b.contact==='name' || b.company==='name';
+  line.className = 'attrib' + (weak ? ' warn' : '');
+  const detail = `Contact matched on <b>${label[b.contact]}</b> <span class="arrow">·</span> company matched on <b>${label[b.company]}</b>`;
+  line.innerHTML = weak
+    ? `${detail} <span class="arrow">·</span> name matching can attach this to the wrong record — add an email, domain or record link.`
+    : `${detail} — exact match, no guessing.`;
+}
+
+// ═══════════════════════════════════════════════
 // Deal mode (create vs update)
 // ═══════════════════════════════════════════════
-function dealRecordId(){ return v('deal-record-id'); }
+function dealRecordId(){ const r=refId('deal'); return r || (/^\d+$/.test(v('deal-record-id')) ? v('deal-record-id') : ''); }
 function updateDealModeStatus(){
   const createEl=document.getElementById('create-new-deal');
   const status=document.getElementById('deal-mode-status');
@@ -1047,14 +1223,17 @@ function doReset(){
   document.querySelectorAll('.invalid').forEach(e=>e.classList.remove('invalid'));
   // Re-apply the locked recipient if it came from the URL
   if(ASSIGN_P){ document.getElementById('owner').disabled=false; lockAssignee(ASSIGN_P); }
-  score(); updateDealModeStatus(); renderCaller();
+  document.getElementById('company-override').checked=false;
+  ['contact','company','deal'].forEach(k=>onRefInput(k,false));
+  renderCompanyBlock();
+  score(); updateDealModeStatus(); renderCaller(); updateMatchLine();
   closeModal('ov-reset');
 }
 
 // ═══════════════════════════════════════════════
 // Round-trip: snapshot + restore (space_data_json)
 // ═══════════════════════════════════════════════
-const TEXT_IDS=['fn','ln','co','dn','cd','owner','pipeline','deal-type','project-type','amount','target-date','deal-source','s-sqft','task-title','ns-date','ns-custom','notes'];
+const TEXT_IDS=['fn','ln','co','em','dom','contact-ref','company-ref','dn','cd','owner','pipeline','deal-type','project-type','amount','target-date','deal-source','s-sqft','task-title','ns-date','ns-custom','notes'];
 const RADIO_NAMES=['p-trigger','p-timeline','a-level','a-open','c-budget','e-done','e-appoint','e-others','call-outcome','s-definite'];
 
 function snapshot(){
@@ -1065,6 +1244,7 @@ function snapshot(){
   d.logged_by_name = CALLER.name;
   d.logged_by_code = CALLER.code;
   d.logged_by_source = CALLER.source;
+  d.company_override = companyOverride() ? '1' : '';
   return d;
 }
 function restore(d){
@@ -1076,6 +1256,9 @@ function restore(d){
   if(d.dn) document.getElementById('dn').dataset.manual='1';
   if(d.amount) document.getElementById('amount').dataset.manual='1';
   if(ASSIGN_P) lockAssignee(ASSIGN_P);
+  document.getElementById('company-override').checked = !!d.company_override;
+  ['contact','company','deal'].forEach(k=>onRefInput(k,true));
+  renderCompanyBlock();
   score(); updateSuggestedValue(); updateAttribution();
 }
 
@@ -1101,15 +1284,22 @@ async function prefillFromHubSpot(){
 function markInvalid(id,bad){ const el=document.getElementById(id); if(el) el.classList.toggle('invalid',bad); }
 function validate(){
   const problems=[];
+  // A linked contact record already holds the names and the company, so typing
+  // them again is friction, not data. Only require them when there is no link.
+  const linked = !!refId('contact');
   const reqs=[
-    ['co','Company'],['owner','Assign lead to'],['deal-type','Deal Type'],
+    ['owner','Assign lead to'],['deal-type','Deal Type'],
     ['project-type','Project Type'],['amount','Amount'],['target-date','Target Appointment Date'],
     ['task-title','Task Title'],['ns-date','Next Activity Date']
   ];
+  if(!linked) reqs.unshift(['co','Company']); else markInvalid('co',false);
   reqs.forEach(([id,lbl])=>{ const bad=!v(id); markInvalid(id,bad); if(bad) problems.push(lbl); });
-  if(!v('fn')){ markInvalid('fn',true); problems.push('First Name'); } else markInvalid('fn',false);
-  if(!v('ln')){ markInvalid('ln',true); problems.push('Last Name'); } else markInvalid('ln',false);
+  if(!linked){
+    if(!v('fn')){ markInvalid('fn',true); problems.push('First Name'); } else markInvalid('fn',false);
+    if(!v('ln')){ markInvalid('ln',true); problems.push('Last Name'); } else markInvalid('ln',false);
+  } else { markInvalid('fn',false); markInvalid('ln',false); }
   if(!CALLER.name) problems.push('Logged by (top right)');
+  refErrors().forEach(e=>problems.push(e+' — fix or clear it'));
   return problems;
 }
 
@@ -1136,7 +1326,16 @@ async function submitToHubSpot(){
     source_tool: SOURCE_TOOL,
     create_new_deal: String(createNew),
     deal_record_id: recId,
-    // contact
+    // contact — identifiers first, names last
+    contact_record_id: refId('contact'),
+    company_record_id: refId('company'),
+    email: v('em'),
+    company_domain: v('dom'),
+    contact_match_basis: matchBasis().contact,   // contact_id | email | name
+    company_match_basis: matchBasis().company,   // contact_association | company_id | domain | name
+    company_from_contact_association: String(matchBasis().company==='contact_association'),
+    company_override: String(companyOverride()),
+    allow_name_match: String(matchBasis().contact==='name' || matchBasis().company==='name'),
     firstname: v('fn'), lastname: v('ln'), company: v('co'),
     // ── who made the call (attribution for the call note) ──
     logged_by_name: CALLER.name,
@@ -1149,7 +1348,8 @@ async function submitToHubSpot(){
     owner_id: v('owner'), owner_name: ownerName(),
     assignee_locked: String(ASSIGNEE_LOCKED),
     // deal
-    dealname: v('dn') || v('co')+' — Office Fit-Out',
+    dealname: v('dn') || (v('co') ? v('co')+' — Office Fit-Out' : ''),
+    dealname_needs_company: String(!v('dn') && !v('co')),   // Make builds it from the fetched company
     pipeline: v('pipeline'),
     deal_type: v('deal-type'),
     deal_source: v('deal-source'),
@@ -1221,13 +1421,17 @@ async function submitToHubSpot(){
 async function logCallOnly(){
   closeModal('ov-nq');
   const minProblems=[];
-  if(!v('co')){ markInvalid('co',true); minProblems.push('Company'); } else markInvalid('co',false);
-  if(!v('fn')){ markInvalid('fn',true); minProblems.push('First Name'); } else markInvalid('fn',false);
-  if(!v('ln')){ markInvalid('ln',true); minProblems.push('Last Name'); } else markInvalid('ln',false);
+  const linkedC = !!refId('contact');
+  if(!linkedC){
+    if(!v('co')){ markInvalid('co',true); minProblems.push('Company'); } else markInvalid('co',false);
+    if(!v('fn')){ markInvalid('fn',true); minProblems.push('First Name'); } else markInvalid('fn',false);
+    if(!v('ln')){ markInvalid('ln',true); minProblems.push('Last Name'); } else markInvalid('ln',false);
+  } else { ['co','fn','ln'].forEach(id=>markInvalid(id,false)); }
   if(!v('owner')){ markInvalid('owner',true); minProblems.push('Assign lead to'); } else markInvalid('owner',false);
   if(!v('task-title')){ markInvalid('task-title',true); minProblems.push('Task Title'); } else markInvalid('task-title',false);
   if(!v('ns-date')){ markInvalid('ns-date',true); minProblems.push('Next Activity Date'); } else markInvalid('ns-date',false);
   if(!CALLER.name) minProblems.push('Logged by (top right)');
+  refErrors().forEach(e=>minProblems.push(e+' — fix or clear it'));
   if(minProblems.length){
     showError('Please complete the minimum fields to log the call:', '<ul>'+minProblems.map(p=>`<li>${esc(p)}</li>`).join('')+'</ul>');
     return;
@@ -1238,6 +1442,15 @@ async function logCallOnly(){
     log_call_only: 'true',
     create_new_deal: 'false',
     deal_record_id: dealRecordId(),
+    contact_record_id: refId('contact'),
+    company_record_id: refId('company'),
+    email: v('em'),
+    company_domain: v('dom'),
+    contact_match_basis: matchBasis().contact,
+    company_match_basis: matchBasis().company,
+    company_from_contact_association: String(matchBasis().company==='contact_association'),
+    company_override: String(companyOverride()),
+    allow_name_match: String(matchBasis().contact==='name' || matchBasis().company==='name'),
     firstname: v('fn'), lastname: v('ln'), company: v('co'),
     logged_by_name: CALLER.name,
     logged_by_code: CALLER.code,
@@ -1247,7 +1460,8 @@ async function logCallOnly(){
     call_note_owner_code: CALLER.code,
     owner_id: v('owner'), owner_name: ownerName(),
     assignee_locked: String(ASSIGNEE_LOCKED),
-    dealname: v('dn')||v('co')+' — Office Fit-Out',
+    dealname: v('dn') || (v('co') ? v('co')+' — Office Fit-Out' : ''),
+    dealname_needs_company: String(!v('dn') && !v('co')),
     deal_source: v('deal-source'),
     stage_override: String(appointment),
     dealstage: appointment ? STAGE_APPOINTMENT_ID : '',
@@ -1301,6 +1515,10 @@ buildCallerOptions();
 if(DEAL_ID) document.getElementById('deal-record-id').value = DEAL_ID;
 document.getElementById('create-new-deal').checked = !DEAL_ID;
 resolveIdentity();
+if(CONTACT_P){ const el=document.getElementById('contact-ref'); el.value=CONTACT_P; el.readOnly=true; }
+if(COMPANY_P){ const el=document.getElementById('company-ref'); el.value=COMPANY_P; el.readOnly=true; }
+['contact','company','deal'].forEach(k=>onRefInput(k,true));
+renderCompanyBlock();
 if(ASSIGN_P) lockAssignee(ASSIGN_P);
 renderCaller();
 updateDealModeStatus();
