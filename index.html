@@ -39,6 +39,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
 .sb-pot  { background: #3d2e1a; color: var(--amber); }
 .sb-lead { background: #1a2e25; color: var(--mint); }
 .sb-hot  { background: #1a3d2a; color: #50e89a; }
+.sb-appt { background: var(--mint); color: var(--dark); }
 .score-dots { margin-left: auto; display: flex; gap: 12px; }
 .sdot-group { display: flex; flex-direction: column; align-items: center; gap: 3px; }
 .sdot-label { color: #888; font-size: 10px; font-weight: 700; letter-spacing: .5px; }
@@ -94,6 +95,9 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
 
 /* ── Suggested value ── */
 .value-hint { font-size: 12px; color: var(--green); font-weight: 700; margin-top: 5px; padding: 6px 10px; background: #f0faf5; border-radius: 7px; border: 1px solid var(--mint-light); display: none; }
+
+/* ── Override notice ── */
+.override-note { font-size: 12px; color: var(--dark); font-weight: 600; margin-top: 8px; padding: 8px 10px; background: var(--mint-pale); border-radius: 7px; border: 1px solid var(--mint); display: none; }
 
 /* ── Actions ── */
 .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
@@ -165,7 +169,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
       <div class="sdot-label">E</div>
     </div>
   </div>
-  <div class="score-hint">Fill in what you know — score updates live. Min. 4/20 to qualify · 4–7 Potential Lead · 8–13 Lead · 14+ Hot Lead</div>
+  <div class="score-hint">Fill in what you know — score updates live. Min. 4/20 to qualify · 4–7 Potential Lead · 8–13 Lead · 14+ Hot Lead · Call Outcome = Appointment forces the Appointment stage and bypasses the minimum score</div>
 </div>
 
 <!-- Main -->
@@ -270,6 +274,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
         </div>
       </div>
       <div class="mode-status mt8" id="deal-mode-status">Mode: creating a new deal.</div>
+      <div class="override-note" id="stage-override-note"></div>
     </div>
   </div>
 
@@ -438,12 +443,13 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
       <div class="fg">
         <label>Call Outcome</label>
         <div class="pills">
-          <label class="pill"><input type="radio" name="call-outcome" value="Potential Lead"><span>Potential Lead</span></label>
-          <label class="pill"><input type="radio" name="call-outcome" value="Lead"><span>Lead</span></label>
-          <label class="pill"><input type="radio" name="call-outcome" value="Hot Lead"><span>Hot Lead</span></label>
-          <label class="pill"><input type="radio" name="call-outcome" value="Appointment"><span>Appointment</span></label>
-          <label class="pill"><input type="radio" name="call-outcome" value="Discovery Call"><span>Discovery Call</span></label>
+          <label class="pill"><input type="radio" name="call-outcome" value="Potential Lead" onchange="score()"><span>Potential Lead</span></label>
+          <label class="pill"><input type="radio" name="call-outcome" value="Lead" onchange="score()"><span>Lead</span></label>
+          <label class="pill"><input type="radio" name="call-outcome" value="Hot Lead" onchange="score()"><span>Hot Lead</span></label>
+          <label class="pill"><input type="radio" name="call-outcome" value="Appointment" onchange="score()"><span>Appointment</span></label>
+          <label class="pill"><input type="radio" name="call-outcome" value="Discovery Call" onchange="score()"><span>Discovery Call</span></label>
         </div>
+        <div class="override-note" id="outcome-override-note"></div>
       </div>
       <div class="fg mt8">
         <textarea id="notes" placeholder="Key quotes, objections, context, who referred them…" style="min-height:64px;"></textarea>
@@ -531,6 +537,21 @@ const WEBHOOK_CREATE_UPDATE = 'https://hook.eu1.make.com/mde9yampvy3tc3z2s4pbb2y
 const WEBHOOK_GET_DATA       = 'https://hook.eu1.make.com/wo2eqpy56cz1pox9xkd7aw4oscdv6cfo';
 const SOURCE_TOOL            = 'SPACE Quick Qualifier';
 
+// ═══════════════════════════════════════════════
+// CONFIG — Appointment stage override
+// ═══════════════════════════════════════════════
+// When Call Outcome = "Appointment", the deal stage is forced to the Appointment
+// stage of pipeline 57438197 and the 4/20 minimum-score gate is bypassed.
+//
+// ⚠ ACTION REQUIRED: replace the placeholder below with the real internal stage ID.
+//    HubSpot → Settings → Objects → Deals → Pipelines → select the pipeline →
+//    hover the Appointment stage → ⋮ → "Copy stage ID".
+//    Leave it as-is only if your Make scenario maps `dealstage_name` to the stage
+//    itself; in that case `dealstage` can stay empty and the name is authoritative.
+const STAGE_APPOINTMENT_ID   = 'REPLACE_WITH_APPOINTMENT_STAGE_ID';
+const STAGE_APPOINTMENT_NAME = 'Appointment';
+const OUTCOME_APPOINTMENT    = 'Appointment';
+
 // Deal ID passed in from HubSpot (round-trip), e.g. ?dealId=12345
 let DEAL_ID = new URLSearchParams(location.search).get('dealId') || '';
 
@@ -542,6 +563,9 @@ function rv(name){ const el=document.querySelector(`input[name="${name}"]:checke
 function setStatus(msg,isError=false){ const el=document.getElementById('push-status'); if(!el)return; el.textContent=msg; el.style.color=isError?'var(--red)':'var(--mid)'; }
 function ownerName(){ const s=document.getElementById('owner'); return s.options[s.selectedIndex]?.text!=='— Select —'?s.options[s.selectedIndex]?.text:''; }
 function formatGBP(n){ return new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP',maximumFractionDigits:0}).format(n); }
+
+// True when the rep has logged the call as an Appointment
+function isAppointmentOutcome(){ return rv('call-outcome')===OUTCOME_APPOINTMENT; }
 
 // ═══════════════════════════════════════════════
 // Modals
@@ -609,11 +633,30 @@ function updateDealModeStatus(){
   if(id){ createEl.checked=false; status.textContent=`Mode: updating existing deal #${id}.`; }
   else if(createEl.checked){ status.textContent='Mode: creating a new deal.'; }
   else { status.textContent='Mode: HubSpot will match an existing deal by contact + company, or create one if none is found.'; }
+  updateStageOverrideNotices();
+}
+
+// ═══════════════════════════════════════════════
+// Appointment stage override — UI notices
+// ═══════════════════════════════════════════════
+function updateStageOverrideNotices(){
+  const on = isAppointmentOutcome();
+  const dealNote = document.getElementById('stage-override-note');
+  const outcomeNote = document.getElementById('outcome-override-note');
+  if(on){
+    dealNote.textContent = `Stage override active: this deal will be set to "${STAGE_APPOINTMENT_NAME}" regardless of the SPACE score.`;
+    dealNote.style.display = 'block';
+    outcomeNote.textContent = `⚑ Appointment logged — stage forced to "${STAGE_APPOINTMENT_NAME}" and the 4/20 minimum score is bypassed.`;
+    outcomeNote.style.display = 'block';
+  } else {
+    dealNote.style.display = 'none';
+    outcomeNote.style.display = 'none';
+  }
 }
 
 // ═══════════════════════════════════════════════
 // Scoring — Delta-matrix aligned
-// S max 2 · P max 4 · A max 7 · C max 3 · E max 4 = 20
+// S max 2 · P max 5 · A max 6 · C max 3 · E max 4 = 20
 // ═══════════════════════════════════════════════
 const SECTION_MAX = {S:2, P:5, A:6, C:3, E:4};
 
@@ -716,8 +759,12 @@ function score(){
   const total = (def==='no') ? Math.min(raw, 7) : raw;
   document.getElementById('score-total').innerHTML=Math.round(total)+'<span>/20</span>';
   const [label,cls]=badge(total);
+  // Appointment overrides the badge display — the underlying score label is
+  // still sent to HubSpot unchanged in space_score_label.
+  const appt = isAppointmentOutcome();
   const b=document.getElementById('score-badge');
-  b.textContent=label; b.className='score-badge '+cls;
+  b.textContent = appt ? `Appointment · stage override` : label;
+  b.className = 'score-badge ' + (appt ? 'sb-appt' : cls);
   // Dots scaled proportionally to each section's max (all sections show out of 4 dots)
   Object.entries(sc).forEach(([k,val])=>{
     const disp=Math.round(val/SECTION_MAX[k]*4);
@@ -725,7 +772,8 @@ function score(){
       document.querySelectorAll(`#${id} .dot`).forEach((d,i)=>{ d.className='dot'+(i<disp?' on':''); });
     });
   });
-  return {sc,total,label};
+  updateStageOverrideNotices();
+  return {sc,total,label,appointment:appt};
 }
 
 // ═══════════════════════════════════════════════
@@ -810,8 +858,9 @@ async function submitToHubSpot(){
     showError('Please complete the required fields before saving:', '<ul>'+problems.map(p=>`<li>${p}</li>`).join('')+'</ul>');
     return;
   }
-  const {sc,total,label}=score();
-  if(total<4){
+  const {sc,total,label,appointment}=score();
+  // Appointment outcome bypasses the 4/20 minimum-score gate entirely.
+  if(total<4 && !appointment){
     document.getElementById('nq-msg').textContent=`This opportunity scored ${Math.round(total)}/20 — below the 4/20 minimum required to create a deal. Gather more information before logging as a lead, or qualify out.`;
     document.getElementById('ov-nq').classList.add('show');
     return;
@@ -838,6 +887,12 @@ async function submitToHubSpot(){
     purchase_type: 'Purchase',                 // hard-coded, not shown
     amount: v('amount'),
     target_appointment_date: v('target-date'), // → closedate in Make
+    // ── stage override (Appointment) ──
+    // When true, Make must set dealstage from these fields and ignore any
+    // score-driven stage mapping.
+    stage_override: String(appointment),
+    dealstage: appointment ? STAGE_APPOINTMENT_ID : '',
+    dealstage_name: appointment ? STAGE_APPOINTMENT_NAME : '',
     // scores
     space_score: Math.round(total),
     space_score_label: label,
@@ -876,13 +931,15 @@ async function submitToHubSpot(){
     const r=await fetch(WEBHOOK_CREATE_UPDATE,{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
     closeProgress();
     if(!r.ok){ showError('The HubSpot webhook returned an error.', `HTTP ${r.status}. Try again — if it keeps failing, send Morgan the time and the deal name.`); return; }
-    showSuccess([
+    const items=[
       createNew ? `Deal will be created: ${payload.dealname}` : `Deal ${recId?('#'+recId):''} will be updated`,
       `Score sent: ${payload.space_score}/20 — ${label}`,
       `Owner: ${payload.owner_name||'—'}`,
       `Task queued: ${payload.task_title} (due ${payload.next_step_date})`
-    ]);
-    setStatus('✓ Sent to HubSpot');
+    ];
+    if(appointment) items.splice(1,0,`Stage forced to: ${STAGE_APPOINTMENT_NAME} (score override)`);
+    showSuccess(items);
+    setStatus(appointment ? '✓ Sent to HubSpot — stage set to Appointment' : '✓ Sent to HubSpot');
   }catch(e){
     closeProgress();
     showError('Could not reach the HubSpot webhook.', 'Check your internet connection and try again. ('+e.message+')');
@@ -906,7 +963,7 @@ async function logCallOnly(){
     showError('Please complete the minimum fields to log the call:', '<ul>'+minProblems.map(p=>`<li>${p}</li>`).join('')+'</ul>');
     return;
   }
-  const {sc,total,label}=score();
+  const {sc,total,label,appointment}=score();
   const payload={
     source_tool: SOURCE_TOOL,
     log_call_only: 'true',
@@ -919,6 +976,10 @@ async function logCallOnly(){
     owner_id: v('owner'), owner_name: ownerName(),
     dealname: v('dn')||v('co')+' — Office Fit-Out',
     deal_source: v('deal-source'),
+    // stage override — carried through in case an existing deal is being touched
+    stage_override: String(appointment),
+    dealstage: appointment ? STAGE_APPOINTMENT_ID : '',
+    dealstage_name: appointment ? STAGE_APPOINTMENT_NAME : '',
     // scores
     space_score: Math.round(total),
     space_score_label: label,
