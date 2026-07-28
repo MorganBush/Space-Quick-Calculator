@@ -20,7 +20,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
 .hdr-logo svg { width: 40px; height: auto; display: block; }
 .hdr-title { color: #fff; font-size: 17px; font-weight: 700; letter-spacing: -.3px; }
 .hdr-sub { color: var(--mint); font-size: 11px; margin-top: 1px; }
-.hdr-right { margin-left: auto; display: flex; gap: 8px; }
+.hdr-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
 .btn { border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity .15s; }
 .btn:hover { opacity: .85; }
 .btn-mint { background: var(--mint); color: var(--dark); }
@@ -28,6 +28,20 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
 .btn-outline { background: transparent; border: 1.5px solid #fff4; color: #fff; }
 .btn-sm { padding: 6px 12px; font-size: 12px; }
 .btn-red { background: var(--red); color: #fff; }
+
+/* ── Logged-by chip (session identity) ── */
+.caller-chip {
+  display: flex; align-items: center; gap: 8px; cursor: pointer;
+  background: #2f2c2b; border: 1.5px solid #4a4746; border-radius: 20px;
+  padding: 5px 6px 5px 12px; transition: border-color .15s;
+}
+.caller-chip:hover { border-color: var(--mint); }
+.caller-chip.unset { border-color: var(--amber); background: #3a2f1c; }
+.caller-label { font-size: 10px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: #8d8988; }
+.caller-chip.unset .caller-label { color: var(--amber); }
+.caller-name { font-size: 13px; font-weight: 700; color: #fff; }
+.caller-chip.unset .caller-name { color: var(--amber); }
+.caller-edit { font-size: 10px; font-weight: 600; color: var(--dark); background: var(--mint); border-radius: 12px; padding: 3px 8px; }
 
 /* ── Score Bar ── */
 .score-bar { background: var(--dark); border-top: 1px solid #fff1; padding: 10px 24px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
@@ -69,6 +83,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
 .fg { display: flex; flex-direction: column; gap: 4px; }
 .fg label { font-size: 10px; font-weight: 700; color: var(--mid); text-transform: uppercase; letter-spacing: .5px; }
 .fg label .req { color: var(--red); margin-left: 2px; }
+.fg label .sub { font-weight: 400; font-size: 10px; text-transform: none; letter-spacing: 0; color: var(--mid); }
 .fg input, .fg select, .fg textarea {
   border: 1.5px solid #e0dedd; border-radius: 7px; padding: 7px 10px;
   font-size: 13px; color: var(--dark); background: #fff; outline: none;
@@ -76,8 +91,12 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
 }
 .fg input:focus, .fg select:focus, .fg textarea:focus { border-color: var(--mint); }
 .fg select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a5655' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 28px; }
+.fg select:disabled { background-color: var(--mint-pale); color: var(--dark); border-color: var(--mint-light); cursor: default; }
 .fg textarea { resize: none; font-family: inherit; min-height: 56px; }
 .fg input.invalid, .fg select.invalid { border-color: var(--red); background: #fff7f7; }
+.field-note { font-size: 11px; color: var(--mid); }
+.field-note a { color: var(--green); font-weight: 700; text-decoration: none; cursor: pointer; }
+.field-note a:hover { text-decoration: underline; }
 
 /* ── Radio pills ── */
 .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
@@ -99,6 +118,12 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
 /* ── Override notice ── */
 .override-note { font-size: 12px; color: var(--dark); font-weight: 600; margin-top: 8px; padding: 8px 10px; background: var(--mint-pale); border-radius: 7px; border: 1px solid var(--mint); display: none; }
 
+/* ── Attribution line ── */
+.attrib { font-size: 13px; padding: 9px 12px; border-radius: 8px; background: var(--mint-pale); border: 1px solid var(--mint-light); color: var(--dark); margin-bottom: 10px; line-height: 1.5; }
+.attrib b { font-weight: 700; }
+.attrib.warn { background: #fdf6e8; border-color: #f0d9a8; color: #7a5a12; }
+.attrib .arrow { color: var(--mid); margin: 0 4px; }
+
 /* ── Actions ── */
 .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .mode-status { font-size: 12px; color: var(--mid); padding: 6px 10px; background: var(--mint-pale); border-radius: 8px; border: 1px solid var(--mint-light); }
@@ -109,6 +134,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
 .overlay.show { display: flex; }
 .modal { background: #fff; border-radius: 14px; padding: 24px 28px; width: min(500px, 94vw); box-shadow: 0 8px 40px rgba(0,0,0,.25); max-height: 88vh; overflow-y: auto; }
 .modal h2 { font-size: 17px; font-weight: 700; margin-bottom: 16px; }
+.modal p.lede { font-size: 13px; color: var(--mid); line-height: 1.6; margin-bottom: 14px; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
 .progress-modal { text-align: center; }
 .spinner { width: 36px; height: 36px; border: 4px solid var(--mint-light); border-top-color: var(--mint); border-radius: 50%; animation: spin .8s linear infinite; margin: 0 auto 12px; }
@@ -139,6 +165,11 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
     <div class="hdr-sub">Zentura Workspace · Cold Call &amp; BD Capture</div>
   </div>
   <div class="hdr-right">
+    <div class="caller-chip unset" id="caller-chip" onclick="openCaller()" title="Who is making these calls — set once per session">
+      <span class="caller-label">Logged by</span>
+      <span class="caller-name" id="caller-name">not set</span>
+      <span class="caller-edit" id="caller-edit">set</span>
+    </div>
     <button class="btn btn-outline btn-sm" onclick="openReset()">↺ Reset</button>
   </div>
 </header>
@@ -175,7 +206,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
 <!-- Main -->
 <div class="main">
 
-  <!-- Prospect + Owner -->
+  <!-- Prospect + Assignee -->
   <div class="card">
     <div class="card-hdr">
       <div class="section-letter" style="background:var(--dark);color:var(--mint);">✦</div>
@@ -189,10 +220,10 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
       </div>
 
       <div class="r3 mt8">
-        <div class="fg"><label>Deal Name <span style="font-weight:400;font-size:10px;text-transform:none;">(auto)</span></label><input id="dn" placeholder="Company — Office Fit-Out"></div>
+        <div class="fg"><label>Deal Name <span class="sub">(auto)</span></label><input id="dn" placeholder="Company — Office Fit-Out"></div>
         <div class="fg"><label>Call Date</label><input id="cd" type="date"></div>
-        <div class="fg"><label>Owner <span class="req">*</span></label>
-          <select id="owner">
+        <div class="fg"><label>Assign lead to <span class="req">*</span> <span class="sub">— who owns this company</span></label>
+          <select id="owner" onchange="updateAttribution()">
             <option value="">— Select —</option>
             <option value="861195212">Sarah Rattu</option>
             <option value="30239022">Armani Hutchins</option>
@@ -203,6 +234,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
             <option value="727500011">Gerry Ward</option>
             <option value="616257507">Morgan Bush</option>
           </select>
+          <div class="field-note" id="assignee-note" style="display:none;">Set from the record — <a onclick="unlockAssignee()">change</a></div>
         </div>
       </div>
     </div>
@@ -237,7 +269,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
         </div>
       </div>
       <div class="r3 mt8">
-        <div class="fg"><label>Amount (£) <span class="req">*</span> <span style="font-weight:400;font-size:10px;text-transform:none;">— auto-fills from sq ft if unknown</span></label>
+        <div class="fg"><label>Amount (£) <span class="req">*</span> <span class="sub">— auto-fills from sq ft if unknown</span></label>
           <input id="amount" type="number" min="0" placeholder="Estimated deal value">
         </div>
         <div class="fg"><label>Target Appointment Date <span class="req">*</span></label>
@@ -262,7 +294,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
         </div>
       </div>
       <div class="r2 mt8">
-        <div class="fg"><label>Deal Record ID <span style="font-weight:400;font-size:10px;text-transform:none;">(auto from HubSpot)</span></label>
+        <div class="fg"><label>Deal Record ID <span class="sub">(auto from HubSpot)</span></label>
           <input id="deal-record-id" placeholder="Fills automatically when opened from a deal" oninput="updateDealModeStatus()">
         </div>
         <div class="fg">
@@ -419,6 +451,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
       <div class="card-title">Next Step <span style="font-size:11px;font-weight:400;color:var(--mid);">— a future task is created on the deal</span></div>
     </div>
     <div class="card-body">
+      <div class="field-note" id="task-owner-note" style="margin-bottom:8px;">This task goes to the person the lead is assigned to, not to you.</div>
       <div class="r2">
         <div class="fg"><label>Task Title <span class="req">*</span></label>
           <input id="task-title" type="text" placeholder="e.g. Call back to book site visit">
@@ -460,6 +493,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
   <!-- Actions -->
   <div class="card">
     <div class="card-body">
+      <div class="attrib warn" id="attrib-line">Set <b>Logged by</b> at the top right before saving.</div>
       <div class="actions">
         <button class="btn btn-mint" onclick="submitToHubSpot()">Save to HubSpot</button>
         <div class="actions-sep"></div>
@@ -469,6 +503,24 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
   </div>
 
 </div><!-- /main -->
+
+<!-- ── Logged-by Modal ── -->
+<div class="overlay" id="ov-caller">
+  <div class="modal">
+    <h2>Who is logging these calls?</h2>
+    <p class="lede">Set this once. It stays on every call you log in this session and is not cleared by Reset. It records who made the call — it does not decide who the lead goes to.</p>
+    <div class="fg">
+      <label>Logged by <span class="req">*</span></label>
+      <select id="caller-select">
+        <option value="">— Select —</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-mint" onclick="confirmCaller()">Confirm</button>
+      <button class="btn btn-outline" style="color:var(--dark);border-color:#ccc;" onclick="closeModal('ov-caller')">Cancel</button>
+    </div>
+  </div>
+</div>
 
 <!-- ── Progress Modal ── -->
 <div class="overlay" id="ov-progress">
@@ -521,7 +573,7 @@ body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--soft); 
 <div class="overlay" id="ov-reset">
   <div class="modal">
     <h2>↺ Reset</h2>
-    <p class="reset-modal">Clear all fields and start fresh?</p>
+    <p class="reset-modal">Clear the call details and start fresh? Your <b>Logged by</b> name stays as it is.</p>
     <div class="modal-actions">
       <button class="btn btn-red" onclick="doReset()">Reset</button>
       <button class="btn btn-outline" style="color:var(--dark);border-color:#ccc;" onclick="closeModal('ov-reset')">Cancel</button>
@@ -538,22 +590,38 @@ const WEBHOOK_GET_DATA       = 'https://hook.eu1.make.com/wo2eqpy56cz1pox9xkd7aw
 const SOURCE_TOOL            = 'SPACE Quick Qualifier';
 
 // ═══════════════════════════════════════════════
+// CONFIG — Volume callers ("Logged by" roster)
+// ═══════════════════════════════════════════════
+// ⚠ ADD YOUR DIALLERS HERE. `code` is what goes in the URL (?caller=code),
+//   `name` is what appears on the chip and in the call note.
+//   Keep this list SEPARATE from the "Assign lead to" list in the HTML above —
+//   non-overlapping lists are what stop the two fields being confused.
+//   If you leave this array empty, the picker falls back to the assignee roster
+//   so the tool still works, but you lose that protection.
+const CALLERS = [
+  // { code: 'jdoe',  name: 'Jane Doe' },
+  // { code: 'asmith', name: 'Alan Smith' },
+];
+
+// ═══════════════════════════════════════════════
 // CONFIG — Appointment stage override
 // ═══════════════════════════════════════════════
-// When Call Outcome = "Appointment", the deal stage is forced to the Appointment
-// stage of pipeline 57438197 and the 4/20 minimum-score gate is bypassed.
-//
-// ⚠ ACTION REQUIRED: replace the placeholder below with the real internal stage ID.
-//    HubSpot → Settings → Objects → Deals → Pipelines → select the pipeline →
-//    hover the Appointment stage → ⋮ → "Copy stage ID".
-//    Leave it as-is only if your Make scenario maps `dealstage_name` to the stage
-//    itself; in that case `dealstage` can stay empty and the name is authoritative.
+// ⚠ Replace with the real internal stage ID from HubSpot.
 const STAGE_APPOINTMENT_ID   = 'REPLACE_WITH_APPOINTMENT_STAGE_ID';
 const STAGE_APPOINTMENT_NAME = 'Appointment';
 const OUTCOME_APPOINTMENT    = 'Appointment';
 
-// Deal ID passed in from HubSpot (round-trip), e.g. ?dealId=12345
-let DEAL_ID = new URLSearchParams(location.search).get('dealId') || '';
+// ═══════════════════════════════════════════════
+// URL params
+// ═══════════════════════════════════════════════
+const PARAMS   = new URLSearchParams(location.search);
+let DEAL_ID    = PARAMS.get('dealId')   || '';   // existing round-trip
+const CALLER_P = PARAMS.get('caller')   || '';   // per-caller bookmark
+const ASSIGN_P = PARAMS.get('assignee') || '';   // pre-derived lead recipient (owner id)
+
+// Session identity — held in memory only, survives Reset, cleared on reload.
+let CALLER = { code:'', name:'' };
+let ASSIGNEE_LOCKED = false;
 
 // ═══════════════════════════════════════════════
 // Helpers
@@ -561,10 +629,9 @@ let DEAL_ID = new URLSearchParams(location.search).get('dealId') || '';
 function v(id){ const el=document.getElementById(id); return el?el.value.trim():''; }
 function rv(name){ const el=document.querySelector(`input[name="${name}"]:checked`); return el?el.value:''; }
 function setStatus(msg,isError=false){ const el=document.getElementById('push-status'); if(!el)return; el.textContent=msg; el.style.color=isError?'var(--red)':'var(--mid)'; }
-function ownerName(){ const s=document.getElementById('owner'); return s.options[s.selectedIndex]?.text!=='— Select —'?s.options[s.selectedIndex]?.text:''; }
+function ownerName(){ const s=document.getElementById('owner'); const t=s.options[s.selectedIndex]?.text; return (t && t!=='— Select —') ? t : ''; }
 function formatGBP(n){ return new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP',maximumFractionDigits:0}).format(n); }
-
-// True when the rep has logged the call as an Appointment
+function esc(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function isAppointmentOutcome(){ return rv('call-outcome')===OUTCOME_APPOINTMENT; }
 
 // ═══════════════════════════════════════════════
@@ -582,6 +649,102 @@ function showError(msg, detailHtml){
   document.getElementById('ov-error').classList.add('show');
 }
 function showSuccess(items){ document.getElementById('success-list').innerHTML=items.map(i=>`<li>${i}</li>`).join(''); document.getElementById('ov-success').classList.add('show'); }
+
+// ═══════════════════════════════════════════════
+// "Logged by" session identity
+// ═══════════════════════════════════════════════
+function buildCallerOptions(){
+  const sel=document.getElementById('caller-select');
+  sel.innerHTML='<option value="">— Select —</option>';
+  if(CALLERS.length){
+    CALLERS.forEach(c=>{
+      const o=document.createElement('option');
+      o.value=c.code; o.textContent=c.name; sel.appendChild(o);
+    });
+  } else {
+    // Fallback: reuse the assignee roster so the tool is usable before the
+    // CALLERS list is filled in. Codes are the owner ids in that case.
+    Array.from(document.getElementById('owner').options).forEach(o=>{
+      if(!o.value) return;
+      const n=document.createElement('option');
+      n.value=o.value; n.textContent=o.text; sel.appendChild(n);
+    });
+  }
+}
+function callerNameFor(code){
+  const hit=CALLERS.find(c=>c.code===code);
+  if(hit) return hit.name;
+  const sel=document.getElementById('caller-select');
+  const opt=Array.from(sel.options).find(o=>o.value===code);
+  return opt ? opt.text : '';
+}
+function openCaller(){
+  document.getElementById('caller-select').value = CALLER.code || '';
+  document.getElementById('ov-caller').classList.add('show');
+}
+function confirmCaller(){
+  const code=document.getElementById('caller-select').value;
+  if(!code){ document.getElementById('caller-select').classList.add('invalid'); return; }
+  document.getElementById('caller-select').classList.remove('invalid');
+  CALLER={ code, name: callerNameFor(code) };
+  closeModal('ov-caller');
+  renderCaller();
+}
+function renderCaller(){
+  const chip=document.getElementById('caller-chip');
+  const nameEl=document.getElementById('caller-name');
+  const editEl=document.getElementById('caller-edit');
+  if(CALLER.name){
+    chip.classList.remove('unset');
+    nameEl.textContent=CALLER.name;
+    editEl.textContent='change';
+  } else {
+    chip.classList.add('unset');
+    nameEl.textContent='not set';
+    editEl.textContent='set';
+  }
+  updateAttribution();
+}
+
+// ═══════════════════════════════════════════════
+// Assignee lock (recipient supplied by the record)
+// ═══════════════════════════════════════════════
+function lockAssignee(ownerId){
+  const sel=document.getElementById('owner');
+  const exists=Array.from(sel.options).some(o=>o.value===ownerId);
+  if(!exists) return;                       // unknown id — leave the rep to pick
+  sel.value=ownerId; sel.disabled=true; ASSIGNEE_LOCKED=true;
+  document.getElementById('assignee-note').style.display='block';
+  updateAttribution();
+}
+function unlockAssignee(){
+  document.getElementById('owner').disabled=false;
+  ASSIGNEE_LOCKED=false;
+  document.getElementById('assignee-note').style.display='none';
+  document.getElementById('owner').focus();
+}
+
+// ═══════════════════════════════════════════════
+// Live attribution line + task note
+// ═══════════════════════════════════════════════
+function updateAttribution(){
+  const line=document.getElementById('attrib-line');
+  const taskNote=document.getElementById('task-owner-note');
+  const to=ownerName();
+  if(!CALLER.name){
+    line.className='attrib warn';
+    line.innerHTML='Set <b>Logged by</b> at the top right before saving.';
+  } else if(!to){
+    line.className='attrib warn';
+    line.innerHTML=`Logging as <b>${esc(CALLER.name)}</b> <span class="arrow">→</span> no lead recipient chosen yet. Pick <b>Assign lead to</b>.`;
+  } else {
+    line.className='attrib';
+    line.innerHTML=`Logging as <b>${esc(CALLER.name)}</b> <span class="arrow">→</span> lead assigned to <b>${esc(to)}</b> <span class="arrow">·</span> follow-up task sits with <b>${esc(to)}</b>`;
+  }
+  taskNote.textContent = to
+    ? `This task goes to ${to}, not to you.`
+    : 'This task goes to the person the lead is assigned to, not to you.';
+}
 
 // ═══════════════════════════════════════════════
 // Auto deal name
@@ -615,7 +778,6 @@ function updateSuggestedValue(){
   const range=getSuggestedValueRange(sqft,type);
   hint.textContent=`💰 Estimated project value: ${formatGBP(range.min)} – ${formatGBP(range.max)}`;
   hint.style.display='block';
-  // Pre-fill Amount with the mid estimate unless the rep has typed their own
   const amt=document.getElementById('amount');
   if(!amt.dataset.manual) amt.value=range.mid;
 }
@@ -662,14 +824,12 @@ const SECTION_MAX = {S:2, P:5, A:6, C:3, E:4};
 
 function calcS(){
   let s=0;
-  // Delta #9 Type of Client/Market (up to 1pt)
   const sqft=parseInt(v('s-sqft'))||0;
   if(sqft>=10000) s+=1.0;
   else if(sqft>=5000) s+=0.75;
   else if(sqft>=2000) s+=0.5;
   else if(sqft>=500)  s+=0.25;
   else if(sqft>0)     s+=0.1;
-  // Delta #11 Type of Project (up to 1pt)
   const pt=v('project-type');
   if(pt==='Relocation')              s+=1.0;
   else if(pt==='Expansion')          s+=0.9;
@@ -681,31 +841,24 @@ function calcS(){
 }
 function calcP(){
   let s=0;
-  // Delta #4 Decision Making Process — trigger (up to 2.5pts)
   const tr=rv('p-trigger');
   if(tr==='Lease expiry')                                             s+=2.5;
   else if(tr==='Growing headcount'||tr==='Consolidating')             s+=2.0;
   else if(tr==='Refreshing / rebrand')                                s+=1.25;
   else if(tr==='Exploring options')                                   s+=0.5;
-  // None mentioned = 0
-  // Delta #5 Decision Dates — timeline (up to 2.5pts)
   const tl=rv('p-timeline');
   if(tl==='urgent') s+=2.5;
   else if(tl==='near') s+=1.5;
   else if(tl==='long') s+=0.5;
-  // unknown = 0
   return Math.min(5, Math.round(s*10)/10);
 }
 function calcA(){
   let s=0;
-  // Delta #1 Levels of Contact + #13 Measurement of Confidence (up to 3.0pts)
   const lv=rv('a-level');
   if(lv==='dm')          s+=3.0;
   else if(lv==='budget') s+=2.4;
   else if(lv==='influencer') s+=1.2;
   else if(lv==='gatekeeper') s+=0.35;
-  // unknown = 0
-  // Delta #12 Attitude Towards Us + #3 Communication Patterns (up to 3.0pts)
   const op=rv('a-open');
   if(op==='hot')  s+=3.0;
   else if(op==='warm') s+=1.5;
@@ -713,7 +866,6 @@ function calcA(){
   return Math.min(6, Math.round(s*10)/10);
 }
 function calcC(){
-  // Delta #7 Finance Process (up to 3pts)
   const b=rv('c-budget');
   if(b==='specific')  return 3.0;
   if(b==='confirmed') return 2.0;
@@ -722,21 +874,18 @@ function calcC(){
 }
 function calcE(){
   let s=0;
-  // Delta #2 Third Party Contacts (up to 2pts)
   const ot=rv('e-others');
   if(ot==='none')    s+=2.0;
   else if(ot==='pm') s+=1.0;
   else if(ot==='inhouse') s+=0.75;
   else if(ot==='agent')   s+=0.5;
   else if(ot==='unknown') s+=0.5;
-  // Delta #6 Procurement Route (up to 1pt)
   const ap=rv('e-appoint');
   if(ap==='negotiated') s+=1.0;
   else if(ap==='referral') s+=0.75;
   else if(ap==='quotes')   s+=0.5;
   else if(ap==='tender')   s+=0.2;
   else if(ap==='unknown')  s+=0.1;
-  // Delta #10 Previous Experience of Client (up to 1pt)
   const done=rv('e-done');
   if(done==='recent')  s+=0.75;
   else if(done==='prev')  s+=0.5;
@@ -747,25 +896,21 @@ function calcE(){
 function badge(total){
   if(total>=14) return ['Hot Lead','sb-hot'];
   if(total>=8)  return ['Lead','sb-lead'];
-  if(total>=4)  return ['Potential Lead','sb-pot'];  // max 7
-  if(total>0)   return ['Not Qualified','sb-nq'];    // 1–3
+  if(total>=4)  return ['Potential Lead','sb-pot'];
+  if(total>0)   return ['Not Qualified','sb-nq'];
   return ['—','sb-none'];
 }
 function score(){
   const sc={S:calcS(),P:calcP(),A:calcA(),C:calcC(),E:calcE()};
   let raw=Math.round((sc.S+sc.P+sc.A+sc.C+sc.E)*10)/10;
-  // Definite project cap — No answer limits badge to Potential Lead
   const def=rv('s-definite');
   const total = (def==='no') ? Math.min(raw, 7) : raw;
   document.getElementById('score-total').innerHTML=Math.round(total)+'<span>/20</span>';
   const [label,cls]=badge(total);
-  // Appointment overrides the badge display — the underlying score label is
-  // still sent to HubSpot unchanged in space_score_label.
   const appt = isAppointmentOutcome();
   const b=document.getElementById('score-badge');
-  b.textContent = appt ? `Appointment · stage override` : label;
+  b.textContent = appt ? 'Appointment · stage override' : label;
   b.className = 'score-badge ' + (appt ? 'sb-appt' : cls);
-  // Dots scaled proportionally to each section's max (all sections show out of 4 dots)
   Object.entries(sc).forEach(([k,val])=>{
     const disp=Math.round(val/SECTION_MAX[k]*4);
     ['dots-'+k,'dots-'+k+'-hdr'].forEach(id=>{
@@ -777,12 +922,13 @@ function score(){
 }
 
 // ═══════════════════════════════════════════════
-// Reset
+// Reset — clears the call, KEEPS the caller identity
 // ═══════════════════════════════════════════════
 function doReset(){
   document.querySelectorAll('input[type=radio]').forEach(r=>r.checked=false);
   document.querySelectorAll('input[type=text],input[type=email],input[type=tel],input[type=date],input[type=number],textarea').forEach(el=>{ el.value=''; });
-  document.querySelectorAll('select').forEach(s=>s.value='');
+  // Clear form selects only — the caller picker is driven by the CALLER variable.
+  ['owner','deal-type','project-type','deal-source'].forEach(id=>{ document.getElementById(id).value=''; });
   document.getElementById('ns-custom').value='';
   document.getElementById('deal-record-id').value = DEAL_ID || '';
   document.getElementById('create-new-deal').checked = !DEAL_ID;
@@ -790,29 +936,37 @@ function doReset(){
   delete document.getElementById('amount').dataset.manual;
   document.getElementById('s-value-hint').style.display='none';
   document.querySelectorAll('.invalid').forEach(e=>e.classList.remove('invalid'));
-  score(); updateDealModeStatus();
+  // Re-apply the locked recipient if it came from the URL
+  if(ASSIGN_P){ document.getElementById('owner').disabled=false; lockAssignee(ASSIGN_P); }
+  score(); updateDealModeStatus(); renderCaller();
   closeModal('ov-reset');
 }
 
 // ═══════════════════════════════════════════════
 // Round-trip: snapshot + restore (space_data_json)
 // ═══════════════════════════════════════════════
-const TEXT_IDS=['fn','ln','co','jt','ph','em','dn','cd','owner','pipeline','deal-type','project-type','amount','target-date','deal-source','s-sqft','task-title','ns-date','ns-custom','notes'];
+const TEXT_IDS=['fn','ln','co','dn','cd','owner','pipeline','deal-type','project-type','amount','target-date','deal-source','s-sqft','task-title','ns-date','ns-custom','notes'];
 const RADIO_NAMES=['p-trigger','p-timeline','a-level','a-open','c-budget','e-done','e-appoint','e-others','call-outcome','s-definite'];
 
 function snapshot(){
   const d={};
   TEXT_IDS.forEach(id=>{ const el=document.getElementById(id); if(el) d[id]=el.value; });
   RADIO_NAMES.forEach(n=>{ d[n]=rv(n); });
+  // Recorded for audit only. restore() deliberately ignores these — see below.
+  d.logged_by_name = CALLER.name;
+  d.logged_by_code = CALLER.code;
   return d;
 }
 function restore(d){
   if(!d || typeof d!=='object') return;
+  // NOTE: logged_by_* is intentionally NOT restored. Reopening a deal logged by
+  // someone else must never overwrite the current session's identity.
   TEXT_IDS.forEach(id=>{ if(d[id]!=null){ const el=document.getElementById(id); if(el) el.value=d[id]; } });
   RADIO_NAMES.forEach(n=>{ if(d[n]){ const el=document.querySelector(`input[name="${n}"][value="${CSS.escape(d[n])}"]`); if(el) el.checked=true; } });
   if(d.dn) document.getElementById('dn').dataset.manual='1';
   if(d.amount) document.getElementById('amount').dataset.manual='1';
-  score(); updateSuggestedValue();
+  if(ASSIGN_P) lockAssignee(ASSIGN_P);
+  score(); updateSuggestedValue(); updateAttribution();
 }
 
 async function prefillFromHubSpot(){
@@ -822,13 +976,13 @@ async function prefillFromHubSpot(){
     const r=await fetch(WEBHOOK_GET_DATA,{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({dealId:DEAL_ID}) });
     const text=await r.text();
     closeProgress();
-    if(!text) return;                      // brand-new deal with no saved data — fine
+    if(!text) return;
     let data;
     try{ data=JSON.parse(text); }catch(_){ return; }
     if(typeof data==='string'){ try{ data=JSON.parse(data); }catch(_){ return; } }
     restore(data);
     setStatus('✓ Loaded previous answers for deal #'+DEAL_ID);
-  }catch(e){ closeProgress(); /* non-fatal: rep can still fill in fresh */ }
+  }catch(e){ closeProgress(); }
 }
 
 // ═══════════════════════════════════════════════
@@ -837,15 +991,15 @@ async function prefillFromHubSpot(){
 function markInvalid(id,bad){ const el=document.getElementById(id); if(el) el.classList.toggle('invalid',bad); }
 function validate(){
   const problems=[];
-  const createNew = !DEAL_ID && document.getElementById('create-new-deal').checked;
   const reqs=[
-    ['co','Company'],['owner','Owner'],['deal-type','Deal Type'],
+    ['co','Company'],['owner','Assign lead to'],['deal-type','Deal Type'],
     ['project-type','Project Type'],['amount','Amount'],['target-date','Target Appointment Date'],
     ['task-title','Task Title'],['ns-date','Next Activity Date']
   ];
   reqs.forEach(([id,lbl])=>{ const bad=!v(id); markInvalid(id,bad); if(bad) problems.push(lbl); });
   if(!v('fn')){ markInvalid('fn',true); problems.push('First Name'); } else markInvalid('fn',false);
   if(!v('ln')){ markInvalid('ln',true); problems.push('Last Name'); } else markInvalid('ln',false);
+  if(!CALLER.name) problems.push('Logged by (top right)');
   return problems;
 }
 
@@ -855,11 +1009,11 @@ function validate(){
 async function submitToHubSpot(){
   const problems=validate();
   if(problems.length){
-    showError('Please complete the required fields before saving:', '<ul>'+problems.map(p=>`<li>${p}</li>`).join('')+'</ul>');
+    if(!CALLER.name && problems.length===1){ openCaller(); return; }
+    showError('Please complete the required fields before saving:', '<ul>'+problems.map(p=>`<li>${esc(p)}</li>`).join('')+'</ul>');
     return;
   }
   const {sc,total,label,appointment}=score();
-  // Appointment outcome bypasses the 4/20 minimum-score gate entirely.
   if(total<4 && !appointment){
     document.getElementById('nq-msg').textContent=`This opportunity scored ${Math.round(total)}/20 — below the 4/20 minimum required to create a deal. Gather more information before logging as a lead, or qualify out.`;
     document.getElementById('ov-nq').classList.add('show');
@@ -870,26 +1024,26 @@ async function submitToHubSpot(){
 
   const payload={
     source_tool: SOURCE_TOOL,
-    // mode
     create_new_deal: String(createNew),
     deal_record_id: recId,
     // contact
     firstname: v('fn'), lastname: v('ln'), company: v('co'),
-    job_title: v('jt'), phone: v('ph'), email: v('em'),
-    // owner
+    // ── who made the call (attribution for the call note) ──
+    logged_by_name: CALLER.name,
+    logged_by_code: CALLER.code,
+    // ── who the lead + task belong to (unchanged keys) ──
     owner_id: v('owner'), owner_name: ownerName(),
+    assignee_locked: String(ASSIGNEE_LOCKED),
     // deal
     dealname: v('dn') || v('co')+' — Office Fit-Out',
     pipeline: v('pipeline'),
     deal_type: v('deal-type'),
     deal_source: v('deal-source'),
     project_type: v('project-type'),
-    purchase_type: 'Purchase',                 // hard-coded, not shown
+    purchase_type: 'Purchase',
     amount: v('amount'),
-    target_appointment_date: v('target-date'), // → closedate in Make
-    // ── stage override (Appointment) ──
-    // When true, Make must set dealstage from these fields and ignore any
-    // score-driven stage mapping.
+    target_appointment_date: v('target-date'),
+    // stage override (Appointment)
     stage_override: String(appointment),
     dealstage: appointment ? STAGE_APPOINTMENT_ID : '',
     dealstage_name: appointment ? STAGE_APPOINTMENT_NAME : '',
@@ -901,7 +1055,7 @@ async function submitToHubSpot(){
     space_score_authority: sc.A,
     space_score_cost: sc.C,
     space_score_execution: sc.E,
-    // qualitative (quick set)
+    // qualitative
     quick_space_type: v('project-type'),
     quick_trigger: rv('p-trigger'),
     quick_timeline: rv('p-timeline'),
@@ -915,14 +1069,14 @@ async function submitToHubSpot(){
     quick_definite_project: rv('s-definite'),
     sqft: v('s-sqft'),
     call_date: v('cd'),
-    // task (obligatory, hard-coded type=to-do, priority=high in Make)
+    // task
     task_title: v('task-title'),
     next_step: v('ns-custom') || v('task-title'),
     next_step_date: v('ns-date'),
-    // notes
+    // notes — caller name prefixed so it is legible on the timeline
     call_outcome: rv('call-outcome'),
-    notes: v('notes'),
-    // round-trip snapshot
+    notes: (CALLER.name ? `Call by ${CALLER.name}\n` : '') + v('notes'),
+    notes_raw: v('notes'),
     space_data_json: JSON.stringify(snapshot())
   };
 
@@ -932,14 +1086,15 @@ async function submitToHubSpot(){
     closeProgress();
     if(!r.ok){ showError('The HubSpot webhook returned an error.', `HTTP ${r.status}. Try again — if it keeps failing, send Morgan the time and the deal name.`); return; }
     const items=[
-      createNew ? `Deal will be created: ${payload.dealname}` : `Deal ${recId?('#'+recId):''} will be updated`,
+      `Logged by: ${esc(CALLER.name)}`,
+      `Lead assigned to: ${esc(payload.owner_name||'—')}`,
+      createNew ? `Deal will be created: ${esc(payload.dealname)}` : `Deal ${recId?('#'+recId):''} will be updated`,
       `Score sent: ${payload.space_score}/20 — ${label}`,
-      `Owner: ${payload.owner_name||'—'}`,
-      `Task queued: ${payload.task_title} (due ${payload.next_step_date})`
+      `Task queued for ${esc(payload.owner_name||'—')}: ${esc(payload.task_title)} (due ${payload.next_step_date})`
     ];
-    if(appointment) items.splice(1,0,`Stage forced to: ${STAGE_APPOINTMENT_NAME} (score override)`);
+    if(appointment) items.splice(3,0,`Stage forced to: ${STAGE_APPOINTMENT_NAME} (score override)`);
     showSuccess(items);
-    setStatus(appointment ? '✓ Sent to HubSpot — stage set to Appointment' : '✓ Sent to HubSpot');
+    setStatus(`✓ Sent — logged by ${CALLER.name}, assigned to ${payload.owner_name}`);
   }catch(e){
     closeProgress();
     showError('Could not reach the HubSpot webhook.', 'Check your internet connection and try again. ('+e.message+')');
@@ -951,16 +1106,16 @@ async function submitToHubSpot(){
 // ═══════════════════════════════════════════════
 async function logCallOnly(){
   closeModal('ov-nq');
-  // Minimal required fields only — no deal fields needed
   const minProblems=[];
   if(!v('co')){ markInvalid('co',true); minProblems.push('Company'); } else markInvalid('co',false);
   if(!v('fn')){ markInvalid('fn',true); minProblems.push('First Name'); } else markInvalid('fn',false);
   if(!v('ln')){ markInvalid('ln',true); minProblems.push('Last Name'); } else markInvalid('ln',false);
-  if(!v('owner')){ markInvalid('owner',true); minProblems.push('Owner'); } else markInvalid('owner',false);
+  if(!v('owner')){ markInvalid('owner',true); minProblems.push('Assign lead to'); } else markInvalid('owner',false);
   if(!v('task-title')){ markInvalid('task-title',true); minProblems.push('Task Title'); } else markInvalid('task-title',false);
   if(!v('ns-date')){ markInvalid('ns-date',true); minProblems.push('Next Activity Date'); } else markInvalid('ns-date',false);
+  if(!CALLER.name) minProblems.push('Logged by (top right)');
   if(minProblems.length){
-    showError('Please complete the minimum fields to log the call:', '<ul>'+minProblems.map(p=>`<li>${p}</li>`).join('')+'</ul>');
+    showError('Please complete the minimum fields to log the call:', '<ul>'+minProblems.map(p=>`<li>${esc(p)}</li>`).join('')+'</ul>');
     return;
   }
   const {sc,total,label,appointment}=score();
@@ -969,18 +1124,16 @@ async function logCallOnly(){
     log_call_only: 'true',
     create_new_deal: 'false',
     deal_record_id: dealRecordId(),
-    // contact
     firstname: v('fn'), lastname: v('ln'), company: v('co'),
-    job_title: v('jt'), phone: v('ph'), email: v('em'),
-    // owner
+    logged_by_name: CALLER.name,
+    logged_by_code: CALLER.code,
     owner_id: v('owner'), owner_name: ownerName(),
+    assignee_locked: String(ASSIGNEE_LOCKED),
     dealname: v('dn')||v('co')+' — Office Fit-Out',
     deal_source: v('deal-source'),
-    // stage override — carried through in case an existing deal is being touched
     stage_override: String(appointment),
     dealstage: appointment ? STAGE_APPOINTMENT_ID : '',
     dealstage_name: appointment ? STAGE_APPOINTMENT_NAME : '',
-    // scores
     space_score: Math.round(total),
     space_score_label: label,
     space_score_scope: sc.S,
@@ -988,7 +1141,6 @@ async function logCallOnly(){
     space_score_authority: sc.A,
     space_score_cost: sc.C,
     space_score_execution: sc.E,
-    // qualitative
     quick_trigger: rv('p-trigger'),
     quick_timeline: rv('p-timeline'),
     quick_authority_level: rv('a-level'),
@@ -997,13 +1149,12 @@ async function logCallOnly(){
     sqft: v('s-sqft'),
     project_type: v('project-type'),
     call_date: v('cd'),
-    // task
     task_title: v('task-title'),
     next_step: v('ns-custom')||v('task-title'),
     next_step_date: v('ns-date'),
-    // notes
     call_outcome: rv('call-outcome'),
-    notes: v('notes'),
+    notes: (CALLER.name ? `Call by ${CALLER.name}\n` : '') + v('notes'),
+    notes_raw: v('notes'),
     space_data_json: JSON.stringify(snapshot())
   };
   openProgress('Logging call to HubSpot…');
@@ -1013,9 +1164,10 @@ async function logCallOnly(){
     if(!r.ok){ showError('The HubSpot webhook returned an error.', `HTTP ${r.status}. Try again — if it keeps failing, send Morgan the time and the contact name.`); return; }
     showSuccess([
       `Call logged — no deal created`,
+      `Logged by: ${esc(CALLER.name)}`,
+      `Lead recipient on file: ${esc(payload.owner_name||'—')}`,
       `Score: ${payload.space_score}/20 — ${label}`,
-      `Owner: ${payload.owner_name||'—'}`,
-      `Task queued: ${payload.task_title} (due ${payload.next_step_date})`
+      `Task queued for ${esc(payload.owner_name||'—')}: ${esc(payload.task_title)} (due ${payload.next_step_date})`
     ]);
     setStatus('✓ Call logged to HubSpot (no deal)');
   }catch(e){
@@ -1024,11 +1176,22 @@ async function logCallOnly(){
   }
 }
 
+// ═══════════════════════════════════════════════
 // Init
+// ═══════════════════════════════════════════════
+buildCallerOptions();
 if(DEAL_ID) document.getElementById('deal-record-id').value = DEAL_ID;
 document.getElementById('create-new-deal').checked = !DEAL_ID;
+if(CALLER_P){
+  const nm = callerNameFor(CALLER_P);
+  if(nm) CALLER = { code: CALLER_P, name: nm };
+}
+if(ASSIGN_P) lockAssignee(ASSIGN_P);
+renderCaller();
 updateDealModeStatus();
 score();
+// No caller in the URL and none set — ask once, up front.
+if(!CALLER.name) openCaller();
 prefillFromHubSpot();
 </script>
 </body>
